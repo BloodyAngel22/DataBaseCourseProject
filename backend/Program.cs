@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using backend;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ builder.Services.AddDbContext<AppDbContext>(opt => {
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers().AddJsonOptions(opt => {
 	opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+	opt.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
 
 builder.Services.AddCors(opt => {
