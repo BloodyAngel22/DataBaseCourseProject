@@ -16,7 +16,7 @@ interface Student {
 
 export default function GetStudentData() {
 	const fetchData = async (): Promise<Student> => {
-		const response = await axios.get('http://localhost:5028/api/Student');
+		const response = await axios.get('/api/Student');
 		return response.data;
 	};
 

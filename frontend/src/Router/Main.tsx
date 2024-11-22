@@ -25,8 +25,8 @@ export default function Main() {
   }
 
   const columns = [
-    { key: "firstname", label: "First Name" },
     { key: "surname", label: "Last Name" },
+    { key: "firstname", label: "First Name" },
     { key: "patronymic", label: "Patronymic" },
     { key: "course", label: "Course" },
     { key: "groupName", label: "Group Name" },
