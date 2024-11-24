@@ -24,7 +24,13 @@ namespace backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Department>>> GetDepartments()
         {
-            return await _context.Departments.ToListAsync();
+			var departments = await _context.Departments.AsNoTracking().OrderBy(d => d.Name).ToListAsync();
+			foreach (var department in departments)
+			{
+				department.Name = char.ToUpper(department.Name[0]) + department.Name[1..];
+			}
+
+            return departments;
         }
 
         // GET: api/Department/5
@@ -86,11 +92,12 @@ namespace backend.Controllers
             {
                 if (DepartmentExists(department.Name))
                 {
-                    return Conflict();
+                    return Conflict(new { message = "Department already exists" });
                 }
                 else
                 {
-                    throw;
+                    // throw;
+					return Conflict(new { message = "Something went wrong" });
                 }
             }
 

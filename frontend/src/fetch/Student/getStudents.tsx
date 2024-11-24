@@ -14,7 +14,7 @@ interface Student {
 	}[];
 }
 
-export default function GetStudentData() {
+export default function GetStudents() {
 	const fetchData = async (): Promise<Student> => {
 		const response = await axios.get('/api/Student');
 		return response.data;

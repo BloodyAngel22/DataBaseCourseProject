@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.Xml;
 
 namespace backend.Controllers
 {
@@ -24,7 +26,7 @@ namespace backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
         {
-			return Ok(await _context.Students.ToListAsync());
+			return Ok(await _context.Students.AsNoTracking().OrderBy(s => s.Course).ThenBy(s => s.GroupName).ThenBy(s => s.Surname).ToListAsync());
         }
 
         // GET: api/Student/5

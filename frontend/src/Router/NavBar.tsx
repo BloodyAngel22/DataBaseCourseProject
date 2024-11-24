@@ -10,13 +10,10 @@ export default function NavBar() {
 						<NLink as={Link} to="/" color="primary" isBlock>Home</NLink>
 					</li>
 					<li>
-						<NLink as={Link} to="/about" color="primary" isBlock>About</NLink>
+						<NLink as={Link} to="/student" color="primary" isBlock>Students</NLink>
 					</li>
 					<li>
-						<NLink as={Link} to="/hook-form" color="primary" isBlock>HookForm</NLink>
-					</li>
-					<li>
-						<NLink as={Link} to="/error" color="primary" isBlock>Error</NLink>
+						<NLink as={Link} to="/department" color="primary" isBlock>Department</NLink>
 					</li>
 				</ul>
 			</nav>
