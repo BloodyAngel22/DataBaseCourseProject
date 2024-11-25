@@ -1,81 +1,67 @@
-import { Button, getKeyValue, Input, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tooltip } from "@nextui-org/react";
+import {
+  Button,
+  getKeyValue,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+  Tooltip,
+} from "@nextui-org/react";
 import { FaEye } from "react-icons/fa";
-import { FiEdit3 } from "react-icons/fi";
 import { MdOutlineDelete } from "react-icons/md";
-import { useCreateDepartment, useDeleteDepartment, useDepartments } from "../../fetch/departmentFetch";
+import { useDepartmentData } from "../../fetch/departmentFetch";
 import { useNavigate } from "react-router-dom";
 import ModalCreate from "../../components/ModalCreate";
-import { SubmitHandler, useForm } from "react-hook-form";
-
-interface DepartmentData {
-	name: string;
-}
+import ModalUpdate from "../../components/ModalUpdate";
+import { useForm } from "react-hook-form";
+import FormInput from "../../components/FormInput";
+import IUpdateDepartment from "../../types/IUpdateDepartment";
+import LoadData from "../../components/LoadData";
+import EmptyTableData from "../../components/EmptyTableData";
+import ErrorComponent from "../../components/ErrorComponent";
 
 export default function DepartmentMain() {
-	const { data, isLoading, error } = useDepartments();
-	const navigate = useNavigate();
-
-	const {
-		register,
+  const { data, isLoading, error, onSubmit, handleDelete, handleUpdate } =
+    useDepartmentData();
+  const navigate = useNavigate();
+  const {
+    register,
 		handleSubmit,
-		formState: { errors },
-	} = useForm<DepartmentData>({
-		mode: "onChange",
+		setValue,
+    formState: { errors },
+  } = useForm<IUpdateDepartment>({
+    mode: "onChange",
 	});
 
-	const { mutate } = useCreateDepartment();
+  const handleDetails = (id: string) => {
+    navigate(`/department/${id.toLowerCase()}`);
+  };
 
-	const onSubmit: SubmitHandler<DepartmentData> = async (data) => {
-		data.name = data.name.toLowerCase();
-		mutate(data);
-	}
+	if (isLoading) return <LoadData />;
+  if (error) return <ErrorComponent error={error.message} pageName="Department page" />;
 
-	const { mutate: deleteDepartment } = useDeleteDepartment();
-	const handleDelete = (id: string) => {
-		id = id.toLowerCase();
-		deleteDepartment(id);
-	}
+  const columns = [
+    { key: "name", label: "Name" },
+    { key: "actions", label: "Actions" },
+  ];
 
-	if (isLoading) {
-		return <p>Loading...</p>;
-	}
-	if (error) {
-		return (
-			<>
-				<h1>Department page</h1>
-				<h2>Error: {error.message}</h2>
-			</>
-		);
-	}
-
-	const handleDetails = (id: string) => {
-		id = id.toLowerCase();
-		navigate(`/department/${id}`);
-	};
-
-	const columns = [
-		{ key: "name", label: "Name" },
-		{ key: "actions", label: "Actions" }
-	];
-
-	return (
+  return (
     <div className="flex flex-col gap-2">
       <h1>Department Page</h1>
 
       <ModalCreate
         header="Create new department"
         handleSubmit={handleSubmit(onSubmit)}
+        btnText="Create"
       >
-        <Input
-          isRequired
+        <FormInput
+          name="name"
+          register={register}
+          errors={errors}
           placeholder="Department name"
-          label="Name"
-          {...register("name", {
-            required: "Name is required",
-            maxLength: { value: 100, message: "Name is too long" },
-          })}
-          errorMessage={errors.name?.message && errors.name?.message}
-          isInvalid={!!errors.name}
+          maxLength={100}
         />
       </ModalCreate>
 
@@ -85,52 +71,60 @@ export default function DepartmentMain() {
             <TableColumn key={column.key}>{column.label}</TableColumn>
           )}
         </TableHeader>
-        {data?.$values?.length === 0 ? (
-          <>
-            <TableBody emptyContent={"No data"}>{[]}</TableBody>
-          </>
+        {data?.$values?.length ? (
+          <TableBody items={data.$values}>
+            {(department) => (
+              <TableRow key={department.name}>
+                {(key) =>
+                  key === "actions" ? (
+                    <TableCell className="flex gap-2">
+                      <Tooltip content="Details">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          color="primary"
+                          onClick={() => handleDetails(department.name)}
+                        >
+                          <FaEye />
+                        </Button>
+                      </Tooltip>
+                      <ModalUpdate
+                        header="Update department"
+                        btnText="Update"
+                        handleSubmit={handleSubmit(handleUpdate)}
+                        onClick={() => {
+                          setValue("id", department.name);
+                          setValue("name", department.name);
+                        }}
+                      >
+                        <FormInput
+                          name="name"
+                          register={register}
+                          errors={errors}
+                          placeholder="Department name"
+                          maxLength={100}
+                        />
+                      </ModalUpdate>
+                      <Tooltip content="Delete">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          color="danger"
+                          onClick={() => handleDelete(department.name)}
+                        >
+                          <MdOutlineDelete />
+                        </Button>
+                      </Tooltip>
+                    </TableCell>
+                  ) : (
+                    <TableCell>{getKeyValue(department, key)}</TableCell>
+                  )
+                }
+              </TableRow>
+            )}
+          </TableBody>
         ) : (
-          <>
-            <TableBody items={data?.$values}>
-              {(department) => (
-                <TableRow key={department.name}>
-                  {(key) =>
-                    key === "actions" ? (
-                      <TableCell className="flex gap-2">
-                        <Tooltip content="Details">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="primary"
-                            onClick={() => handleDetails(department.name)}
-                          >
-                            <FaEye />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip content="Edit">
-                          <Button isIconOnly size="sm" color="secondary">
-                            <FiEdit3 />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip content="Delete">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="danger"
-                            onClick={() => handleDelete(department.name)}
-                          >
-                            <MdOutlineDelete />
-                          </Button>
-                        </Tooltip>
-                      </TableCell>
-                    ) : (
-                      <TableCell>{getKeyValue(department, key)}</TableCell>
-                    )
-                  }
-                </TableRow>
-              )}
-            </TableBody>
-          </>
+          <EmptyTableData />
         )}
       </Table>
     </div>

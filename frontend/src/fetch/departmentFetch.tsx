@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import IDepartment from "../types/IDepartment";
 import IDepartmentById from "../types/IDepartmentById";
-import ICreateDepartment from "../types/ICreateDepartment";
+import IUpdateDepartment from "../types/IUpdateDepartment";
 import IError from "../types/IError";
+import { SubmitHandler } from "react-hook-form";
+import IDepartmentData from "../types/IDepartmentData";
 
 const API_URL = "/api/Department";
 
@@ -39,7 +41,7 @@ export function useCreateDepartment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (newDepartment: ICreateDepartment) => {
+    mutationFn: async (newDepartment: IDepartmentData) => {
 			const response = await axios.post(API_URL, newDepartment);
       return response.data;
     },
@@ -58,9 +60,10 @@ export function useUpdateDepartment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (updatedDepartment: IDepartment) => {
+		mutationFn: async (updatedDepartment: IUpdateDepartment) => {
+			console.log(updatedDepartment);
       const response = await axios.put(
-        `${API_URL}/${updatedDepartment.$id}`,
+        `${API_URL}/${updatedDepartment.id}`,
         updatedDepartment
       );
       return response.data;
@@ -86,4 +89,32 @@ export function useDeleteDepartment() {
 			});
 		}
 	});
+}
+
+
+export function useDepartmentData() {
+	const { data, isLoading, error } = useDepartments();
+	const { mutate } = useCreateDepartment();
+	const updateDepartment = useUpdateDepartment().mutate;
+	const deleteDepartment = useDeleteDepartment().mutate;
+
+	const onSubmit: SubmitHandler<IDepartmentData> = async (data) => {
+		data.name = data.name.toLowerCase();
+		mutate(data);
+	}
+
+	const handleUpdate: SubmitHandler<IUpdateDepartment> = async (data) => {
+		data.name = data.name.toLowerCase();
+		updateDepartment(data);
+	}
+
+	const handleDelete: (id: string) => void = (id) => {
+		if (!window.confirm("Are you sure you want to delete this department?")) {
+			return;
+		}
+		id = id.toLowerCase();
+		deleteDepartment(id);
+	}
+
+	return { data, isLoading, error, onSubmit, handleDelete, handleUpdate }
 }

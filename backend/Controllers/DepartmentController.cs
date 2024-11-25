@@ -25,10 +25,10 @@ namespace backend.Controllers
         public async Task<ActionResult<IEnumerable<Department>>> GetDepartments()
         {
 			var departments = await _context.Departments.AsNoTracking().OrderBy(d => d.Name).ToListAsync();
-			foreach (var department in departments)
-			{
-				department.Name = char.ToUpper(department.Name[0]) + department.Name[1..];
-			}
+			// foreach (var department in departments)
+			// {
+			// 	department.Name = char.ToUpper(department.Name[0]) + department.Name[1..];
+			// }
 
             return departments;
         }
@@ -47,40 +47,65 @@ namespace backend.Controllers
             return department;
         }
 
-        // PUT: api/Department/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDepartment(string id, Department department)
-        {
-            if (id != department.Name)
-            {
-                return BadRequest();
-            }
+		// PUT: api/Department/5
+		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+	[HttpPut("{id}")]
+public async Task<IActionResult> PutDepartment(string id, Department department)
+{
+    // Находим существующий департамент
+    var existingDepartment = await _context.Departments.Include(d => d.Groups).Include(d => d.Lecturers).FirstOrDefaultAsync(d => d.Name == id);
 
-            _context.Entry(department).State = EntityState.Modified;
+    if (existingDepartment == null)
+    {
+        return NotFound($"Department with ID {id} not found.");
+    }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!DepartmentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+    // Убираем связи зависимых объектов
+    foreach (var group in existingDepartment.Groups)
+    {
+        group.DepartmentName = null; // Убираем FK
+    }
+    foreach (var lecturer in existingDepartment.Lecturers)
+    {
+        lecturer.DepartmentName = null; // Убираем FK
+    }
 
-            return NoContent();
-        }
+    // Сохраняем изменения, чтобы отвязать зависимости
+    await _context.SaveChangesAsync();
 
-        // POST: api/Department
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+    // Удаляем старый департамент
+    _context.Departments.Remove(existingDepartment);
+    await _context.SaveChangesAsync();
+
+    // Создаем новый департамент
+    var newDepartment = new Department
+    {
+        Name = department.Name,
+        // Добавляем дополнительные свойства, если они есть
+    };
+    _context.Departments.Add(newDepartment);
+    await _context.SaveChangesAsync();
+
+    // Перепривязываем зависимости к новому департаменту
+    foreach (var group in existingDepartment.Groups)
+    {
+        group.DepartmentName = newDepartment.Name; // Привязываем к новому FK
+    }
+    foreach (var lecturer in existingDepartment.Lecturers)
+    {
+        lecturer.DepartmentName = newDepartment.Name; // Привязываем к новому FK
+    }
+
+    // Сохраняем изменения
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
+	
+
+		// POST: api/Department
+		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[HttpPost]
         public async Task<ActionResult<Department>> PostDepartment(Department department)
         {
             _context.Departments.Add(department);

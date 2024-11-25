@@ -3,13 +3,13 @@ import { FaEye } from "react-icons/fa";
 import { FiEdit3 } from "react-icons/fi";
 import { MdOutlineDelete, MdOutlineLibraryAdd } from "react-icons/md";
 import GetStudents from "../../fetch/Student/getStudents";
+import LoadData from "../../components/LoadData";
 
 export default function StudentMain() {
   const { data, isLoading, error } = GetStudents();
 
-  if (isLoading) {
-    return <p>Loading...</p>;
-  }
+  if (isLoading) return <LoadData />;
+
   if (error) {
     return (
       <>

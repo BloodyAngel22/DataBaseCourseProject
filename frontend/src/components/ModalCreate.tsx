@@ -6,12 +6,13 @@ import React from "react";
 
 interface ModalCreateProps {
 	header?: string;
+	btnText: string;
 	children?: React.ReactNode;
 	handleSubmit: () => void;
 	isSuccess?: boolean;
 }
 
-export default function ModalCreate({ header, children, handleSubmit, isSuccess }: ModalCreateProps) {
+export default function ModalCreate({ header, children, handleSubmit, isSuccess, btnText }: ModalCreateProps) {
 	const {isOpen, onOpen, onOpenChange} = useDisclosure();
 
   return (
@@ -23,12 +24,14 @@ export default function ModalCreate({ header, children, handleSubmit, isSuccess 
         className="w-max"
         onPress={onOpen}
       >
-        Create
+        {btnText}
       </Button>
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        scrollBehavior="inside"
+				scrollBehavior="inside"
+				isDismissable={false}
+				isKeyboardDismissDisabled={true}
       >
         <ModalContent>
           {(onClose) => (
@@ -39,10 +42,7 @@ export default function ModalCreate({ header, children, handleSubmit, isSuccess 
 							<form onSubmit={(ev: React.FormEvent) => {
 								ev.preventDefault();
 								handleSubmit();
-								//Закрыть, если вернулся ответ
-								if (isSuccess) {
-									onClose();
-								}
+								// onClose();
 							}}>
 								<ModalBody>{children}</ModalBody>
                 <ModalFooter>
@@ -59,8 +59,8 @@ export default function ModalCreate({ header, children, handleSubmit, isSuccess 
 										size="sm"
 										type="submit"
                     startContent={<IoCreateOutline />}
-                  >
-                    Create
+									>
+										{btnText}
                   </Button>
                 </ModalFooter>
               </form>
