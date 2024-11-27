@@ -61,7 +61,7 @@ export default function DepartmentMain() {
           register={register}
           errors={errors}
           placeholder="Department name"
-          maxLength={100}
+					maxLength={100}
         />
       </ModalCreate>
 
