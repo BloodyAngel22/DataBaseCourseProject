@@ -1,0 +1,3 @@
+interface DepartmentDTO {
+	name: string;
+}
