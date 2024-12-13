@@ -21,6 +21,7 @@ export default interface MarksPromise {
 			course: number;
 			birthdate: string;
 			groupName: string;
+			fio: string;
 		};
 	}[];
 }

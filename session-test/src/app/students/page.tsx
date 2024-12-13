@@ -1,8 +1,5 @@
 "use client";
 
-import {
-  getDepartments,
-} from "@/api/departmentApi";
 import ModalDetail from "@/components/ModalDetail";
 import {
   Table,
@@ -15,6 +12,7 @@ import {
   Button,
   Pagination,
 	Tooltip,
+	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -22,22 +20,18 @@ import ModalCreate from "@/components/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/FormInput";
 import ModalDelete from "@/components/ModalDelete";
-import { TiArrowBackOutline } from "react-icons/ti";
+import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
-import { createGroup, deleteGroup, getGroup, getGroups, updateGroup } from "@/api/groupApi";
+import { getGroups } from "@/api/groupApi";
 import FormSelect from "@/components/FormSelect";
-import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
-import GroupDTO from "@/types/Group/GroupDTO";
 import GroupsPromise from "@/types/Group/GroupsPromise";
-import LecturersPromise from "@/types/Lecturer/LecturersPromise";
-import LecturerDTO from "@/types/Lecturer/LecturerDTO";
-import { createLecturer, deleteLecturer, getLecturer, getLecturers, updateLecturer } from "@/api/lecturerApi";
 import FormDateOnly from "@/components/FormDateOnly";
 import StudentsPromise from "@/types/Student/StudentsPromise";
 import StudentDTO from "@/types/Student/StudentDTO";
 import { createStudent, deleteStudent, getStudent, getStudents } from "@/api/studentApi";
+import sortData from "@/functions/sortData";
 
 let cachedGroups: string[] | null = null;
 
@@ -45,14 +39,49 @@ let cachedGroups: string[] | null = null;
 export default function StudentsPage() {
   const [students, setStudents] = useState<StudentsPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
-  const [page, setPage] = useState(1);
+	const [page, setPage] = useState(1);
+	
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortColumn, setSortColumn] = useState<string | null>(null);
+	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");	
+
   const rowsPerPage = 5;
-  let pages = 0;
+	let pages = 0;
+
+	const filteredStudents = useMemo(() => {
+  if (!searchQuery.trim()) return students?.$values || [];
+  const lowerQuery = searchQuery.toLowerCase();
+
+  const matchesQuery = (obj: any): boolean => {
+    return Object.entries(obj).some(([key, value]) => {
+      const normalizedKey = key.trim().toLowerCase();
+      if (["id", "$id", "lecturerid", "disciplineid", "cabinetid", "eventformtypeid"].includes(normalizedKey)) {
+        return false;
+      }
+      if (typeof value === "string") {
+        return value.toLowerCase().includes(lowerQuery);
+      }
+      if (typeof value === "object" && value !== null) {
+        return matchesQuery(value);
+      }
+      return false;
+    });
+  };
+
+  return students?.$values.filter((student) => matchesQuery(student)) || [];
+}, [students, searchQuery]);
+
+	const sortedStudents = useMemo(() => {
+		if (!sortColumn) return filteredStudents;
+		if (!students) return [];
+    return sortData(filteredStudents, sortColumn as keyof typeof filteredStudents[0], sortDirection);
+	}, [filteredStudents, sortColumn, sortDirection]);	
+
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return students?.$values.slice(start, end);
-  }, [students, page]);
+    return sortedStudents.slice(start, end);
+  }, [sortedStudents, page]);
 
   const [selectedItem, setSelectedItem] = useState<StudentDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,7 +112,7 @@ export default function StudentsPage() {
   const [id, setId] = useState("");
 
   if (students) {
-    pages = Math.ceil(students.$values.length / rowsPerPage);
+    pages = Math.ceil(sortedStudents.length / rowsPerPage);
   }
 
 	const handleSubmitBtn = handleSubmitCreate(async (data) => {
@@ -151,12 +180,12 @@ export default function StudentsPage() {
   }
 
 	const columns = [
-		{ key: "surname", label: "Last Name" },
-		{ key: "firstname", label: "First Name" },
-		{ key: "patronymic", label: "Patronymic" },
-		{ key: "birthdate", label: "Birthdate" },
-    { key: "groupName", label: "Group" },
-    { key: "actions", label: "Actions" },
+		{ key: "surname", label: "Last Name", sortable: true },
+		{ key: "firstname", label: "First Name", sortable: true },
+		{ key: "patronymic", label: "Patronymic", sortable: true },
+		{ key: "birthdate", label: "Birthdate", sortable: true },
+    { key: "groupName", label: "Group", sortable: true },
+    { key: "actions", label: "Actions", sortable: false },
 	];
 
 	
@@ -174,11 +203,20 @@ export default function StudentsPage() {
 		return groups;
 	}
 
+			const handleSort = (key: string) => {
+		if (sortColumn === key) {
+			setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+		} else {
+			setSortColumn(key);
+			setSortDirection("asc");
+		}
+	};
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
       <div className="container mx-auto">
-				<h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
-					Students
+        <h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
+          Students
         </h1>
 
         <div className="flex justify-between items-center mb-6">
@@ -208,51 +246,57 @@ export default function StudentsPage() {
               maxLength={100}
               type="text"
               label="First Name"
-						/>
-						<FormInput
-							name="surname"
-							register={registerCreate}
-							errors={errorsCreate}
-							maxLength={100}
-							type="text"
-							label="Last Name"
-						/>
-						<FormInput
-							name="patronymic"
-							register={registerCreate}
-							errors={errorsCreate}
-							maxLength={100}
-							type="text"
-							label="Patronymic"
-						/>
-						<FormInput
-							name="course"
-							register={registerCreate}
-							errors={errorsCreate}	
-							type="number"
-							label="Course"
-							min={1}
-							max={5}
-						/>
-						<FormDateOnly
-							name="birthdate"
-							label="Birthdate"
-							register={registerCreate}
-							errors={errorsCreate}
-							watch={watchCreate}
-							setValue={setValueCreate}
-						/>
-						<FormSelect
-							label="Group"
-							data={getGroupsData()}
-							name="groupName"
-							register={registerCreate}
-							errors={errorsCreate}
-						/>
+            />
+            <FormInput
+              name="surname"
+              register={registerCreate}
+              errors={errorsCreate}
+              maxLength={100}
+              type="text"
+              label="Last Name"
+            />
+            <FormInput
+              name="patronymic"
+              register={registerCreate}
+              errors={errorsCreate}
+              maxLength={100}
+              type="text"
+              label="Patronymic"
+            />
+            <FormInput
+              name="course"
+              register={registerCreate}
+              errors={errorsCreate}
+              type="number"
+              label="Course"
+              min={1}
+              max={5}
+            />
+            <FormDateOnly
+              name="birthdate"
+              label="Birthdate"
+              register={registerCreate}
+              errors={errorsCreate}
+              watch={watchCreate}
+              setValue={setValueCreate}
+            />
+            <FormSelect
+              label="Group"
+              data={getGroupsData()}
+              name="groupName"
+              register={registerCreate}
+              errors={errorsCreate}
+            />
           </ModalCreate>
         </div>
 
-				<div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Input
+            type="text"
+            label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -277,8 +321,20 @@ export default function StudentsPage() {
                 <TableColumn
                   key={column.key}
                   className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+                  onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  {column.label}
+                  <div className="flex items-center">
+                    <span>{column.label}</span>
+                    <span className="scale-125">
+                      {column.sortable && sortColumn === column.key ? (
+                        sortDirection === "asc" ? (
+                          <TiArrowDownThick />
+                        ) : (
+                          <TiArrowUpThick />
+                        )
+                      ) : null}
+                    </span>
+                  </div>
                 </TableColumn>
               )}
             </TableHeader>
@@ -292,18 +348,21 @@ export default function StudentsPage() {
                           id={item.id}
                           header="Student details"
                           fetchData={getStudent}
-												/>
-												<Tooltip content="Update details">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          color="secondary"
-													onPress={() => { openModal(item); setId(item.id); }}
-                          variant="shadow"
-                          className="scale-85"
-                          startContent={<FiEdit3 className="text-lg" />}
-													/>
-												</Tooltip>
+                        />
+                        <Tooltip content="Update details">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            color="secondary"
+                            onPress={() => {
+                              openModal(item);
+                              setId(item.id);
+                            }}
+                            variant="shadow"
+                            className="scale-85"
+                            startContent={<FiEdit3 className="text-lg" />}
+                          />
+                        </Tooltip>
 
                         <ModalDelete
                           title="Delete student"
@@ -331,73 +390,77 @@ export default function StudentsPage() {
               setIsModalOpen(false);
               resetUpdate();
             }}
-						onSubmit={handleUpdate}
-						isUpdatedSuccess={isCreatedSuccess}
-						setIsUpdatedSuccess={setIsCreatedSuccess}
+            onSubmit={handleUpdate}
+            isUpdatedSuccess={isCreatedSuccess}
+            setIsUpdatedSuccess={setIsCreatedSuccess}
           >
             <FormInput
               name="firstname"
               register={registerUpdate}
               errors={errorsUpdate}
               maxLength={100}
-							type="text"
-							label="First Name"
+              type="text"
+              label="First Name"
               setValue={() => {
                 setValueUpdate("firstname", selectedItem?.firstname || "");
               }}
-						/>
-						<FormInput
-							name="surname"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							maxLength={100}
-							type="text"
-							label="Last Name"
-							setValue={() => {
-								setValueUpdate("surname", selectedItem?.surname || "");
-							}}
-						/>
-						<FormInput
-							name="patronymic"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							maxLength={100}
-							type="text"
-							label="Patronymic"
-							setValue={() => {
-								setValueUpdate("patronymic", selectedItem?.patronymic || "");
-							}}
-						/>
-						<FormInput
-							name="course"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							type="number"
-							label="Course"
-							min={1}
-							max={5}
-							setValue={() => {
-								setValueUpdate("course", selectedItem?.course || 0);
-							}}
-						/>
-						<FormDateOnly
-							name="birthdate"
-							label="Birthdate"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							watch={watchUpdate}
-							setValue={() => setValueUpdate("birthdate", selectedItem?.birthdate || "")}
-							value={selectedItem?.birthdate}
-						/>
-						<FormSelect
-							label="Group"
-							data={getGroupsData()}
-							name="groupName"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							defaultSelectedValue={selectedItem?.groupName}
-							setValue={() => setValueUpdate("groupName", selectedItem?.groupName || "ww")}
-						/>
+            />
+            <FormInput
+              name="surname"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              maxLength={100}
+              type="text"
+              label="Last Name"
+              setValue={() => {
+                setValueUpdate("surname", selectedItem?.surname || "");
+              }}
+            />
+            <FormInput
+              name="patronymic"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              maxLength={100}
+              type="text"
+              label="Patronymic"
+              setValue={() => {
+                setValueUpdate("patronymic", selectedItem?.patronymic || "");
+              }}
+            />
+            <FormInput
+              name="course"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              type="number"
+              label="Course"
+              min={1}
+              max={5}
+              setValue={() => {
+                setValueUpdate("course", selectedItem?.course || 0);
+              }}
+            />
+            <FormDateOnly
+              name="birthdate"
+              label="Birthdate"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              watch={watchUpdate}
+              setValue={() =>
+                setValueUpdate("birthdate", selectedItem?.birthdate || "")
+              }
+              value={selectedItem?.birthdate}
+            />
+            <FormSelect
+              label="Group"
+              data={getGroupsData()}
+              name="groupName"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              defaultSelectedValue={selectedItem?.groupName}
+              setValue={() =>
+                setValueUpdate("groupName", selectedItem?.groupName || "ww")
+              }
+            />
           </ModalUpdate>
         </div>
       </div>

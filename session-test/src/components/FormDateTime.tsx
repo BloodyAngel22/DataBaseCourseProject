@@ -4,6 +4,7 @@ import { CalendarDate, CalendarDateTime, DateValue, parseDate, parseDateTime, Ti
 import { useEffect } from "react";
 
 interface FormDateOnlyProps {
+	label?: string;
   name: string;
   register: UseFormRegister<any>;
   errors: any;
@@ -13,7 +14,7 @@ interface FormDateOnlyProps {
 	maxDate?: Date;
 }
 
-export default function FormDateTime({ name, register, errors, setValue, watch, value: initialDate, maxDate }: FormDateOnlyProps) {
+export default function FormDateTime({ name, register, errors, setValue, watch, value: initialDate, maxDate, label }: FormDateOnlyProps) {
   const rawValue = watch(name) || initialDate;
   const value = rawValue ? parseDateTime(rawValue) : null;
 
@@ -56,7 +57,7 @@ export default function FormDateTime({ name, register, errors, setValue, watch, 
 				granularity='minute'
 				hideTimeZone
 				isRequired
-        label={name}
+        label={label ? label : name}
         isInvalid={!!errors[name]}
         errorMessage={errors[name]?.message}
         value={value}

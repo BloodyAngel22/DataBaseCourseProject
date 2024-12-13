@@ -12,6 +12,7 @@ import {
   Button,
   Pagination,
 	Tooltip,
+	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -19,7 +20,7 @@ import ModalCreate from "@/components/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/FormInput";
 import ModalDelete from "@/components/ModalDelete";
-import { TiArrowBackOutline } from "react-icons/ti";
+import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
@@ -36,6 +37,7 @@ import EventFormTypesPromise from "@/types/EventFormType/EventFormTypesPromise";
 import { getEventFormTypes } from "@/api/EventFormTypeApi";
 import DisciplinesPromise from "@/types/Discipline/DisciplinesPromise";
 import { getDisciplines } from "@/api/disciplineApi";
+import sortData from "@/functions/sortData";
 
 let cachedDisciplines: string[] | null = null;
 let cachedLecturers: string[] | null = null;
@@ -48,14 +50,47 @@ export default function ExamsPage() {
 	const [exams, setExams] = useState<ExamDisciplinesPromise>();
 	const [lecturers, setLecturers] = useState<LecturersPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
-  const [page, setPage] = useState(1);
+	const [page, setPage] = useState(1);
+	
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortColumn, setSortColumn] = useState<string | null>(null);
+	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");	
+
+const filteredExams = useMemo(() => {
+  if (!searchQuery.trim()) return exams?.$values || [];
+  const lowerQuery = searchQuery.toLowerCase();
+
+  const matchesQuery = (obj: any): boolean => {
+    return Object.entries(obj).some(([key, value]) => {
+      const normalizedKey = key.trim().toLowerCase();
+      if (["id", "$id", "lecturerid", "disciplineid", "cabinetid", "eventformtypeid"].includes(normalizedKey)) {
+        return false;
+      }
+      if (typeof value === "string") {
+        return value.toLowerCase().includes(lowerQuery);
+      }
+      if (typeof value === "object" && value !== null) {
+        return matchesQuery(value);
+      }
+      return false;
+    });
+  };
+  return exams?.$values.filter((exam) => matchesQuery(exam)) || [];
+}, [exams, searchQuery]);
+
+	const sortedExams = useMemo(() => {
+		if (!sortColumn) return filteredExams;
+		if (!exams) return [];
+    return sortData(filteredExams, sortColumn as keyof typeof filteredExams[0], sortDirection);
+	}, [filteredExams, sortColumn, sortDirection]);	
+
   const rowsPerPage = 5;
   let pages = 0;
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return exams?.$values.slice(start, end);
-  }, [exams, page]);
+    return sortedExams.slice(start, end);
+  }, [sortedExams, page]);
 
   const [selectedItem, setSelectedItem] = useState<ExamDisciplineDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,7 +121,7 @@ export default function ExamsPage() {
   const [id, setId] = useState("");
 
   if (exams) {
-    pages = Math.ceil(exams.$values.length / rowsPerPage);
+    pages = Math.ceil(sortedExams.length / rowsPerPage);
   }
 
 	const handleSubmitBtn = handleSubmitCreate(async (data) => {
@@ -105,7 +140,10 @@ export default function ExamsPage() {
       const response = await createExamDiscipline(data);
       console.log(response);
       if (response.success === true) {
-        const data = await getExamDisciplines();
+				const data = await getExamDisciplines();
+				data?.$values.forEach((item) => {
+				item.lecturer.fio = `${item.lecturer.surname} ${item.lecturer.firstname} ${item.lecturer.patronymic}`;
+			})
         setExams(data);
         resetCreate();
         setIsCreatedSuccess(true);
@@ -122,7 +160,10 @@ export default function ExamsPage() {
       const response = await deleteExamDiscipline(id);
       console.log(response);
       if (response.success === true) {
-        const data = await getExamDisciplines();
+				const data = await getExamDisciplines();
+				data?.$values.forEach((item) => {
+				item.lecturer.fio = `${item.lecturer.surname} ${item.lecturer.firstname} ${item.lecturer.patronymic}`;
+			})
         setExams(data);
       } else {
         alert(response.message);
@@ -153,7 +194,12 @@ export default function ExamsPage() {
 
   useEffect(() => {
     const fetchExams = async () => {
-      const data = await getExamDisciplines();
+			const data = await getExamDisciplines();
+			
+			data?.$values.forEach((item) => {
+				item.lecturer.fio = `${item.lecturer.surname} ${item.lecturer.firstname} ${item.lecturer.patronymic}`;
+			})
+
       setExams(data);
     };
 		fetchExams();
@@ -172,15 +218,14 @@ export default function ExamsPage() {
   }
 
 	const columns = [
-		{ key: "disciplineName", label: "Discipline" },
-		{ key: "eventDatetime", label: "Date" },
-		{ key: "lecturerId", label: "Lecturer" },
-		{ key: "cabinetRoomName", label: "Room" },
-		{ key: "eventFormType", label: "Type" },
-		{ key: "actions", label: "Actions" },
+		{ key: "disciplineName", label: "Discipline", sortable: true },
+		{ key: "eventDatetime", label: "Date", sortable: true },
+		{ key: "lecturer.fio", label: "Lecturer", sortable: true },
+		{ key: "cabinetRoomName", label: "Room", sortable: true },
+		{ key: "eventFormType", label: "Type", sortable: true },
+		{ key: "actions", label: "Actions", sortable: false },
 	];
 
-	
 	const getLecturersData = async (): Promise<string[]> => {
 		if (cachedLecturers) {
 			return cachedLecturers;
@@ -246,11 +291,28 @@ export default function ExamsPage() {
 		return lecturer ? `${lecturer?.surname} ${lecturer?.firstname} ${lecturer?.patronymic}` : "Unknown";
 	}
 
+	  const renderCell = (data: any, columnKey: string) => {
+    if (columnKey.includes(".")) {
+      const keys = columnKey.split(".");
+      return keys.reduce((acc, key) => acc?.[key], data) || "N/A";
+    }
+    return data[columnKey] || "N/A";
+	};
+
+	const handleSort = (key: string) => {
+		if (sortColumn === key) {
+			setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+		} else {
+			setSortColumn(key);
+			setSortDirection("asc");
+		}
+	};
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
       <div className="container mx-auto">
-				<h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
-					Exams
+        <h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
+          Exams
         </h1>
 
         <div className="flex justify-between items-center mb-6">
@@ -272,47 +334,54 @@ export default function ExamsPage() {
             error={null}
             setIsCreatedSuccess={setIsCreatedSuccess}
             isCreatedSuccess={isCreatedSuccess}
-					>
-						<FormSelect
-							label="Discipline"
-							data={getDisciplinesData()}
-							name="disciplineName"
-							register={registerCreate}
-							errors={errorsCreate}
-						/>
-						<FormDateTime
-							name="eventDateTime"
-							register={registerCreate}
-							errors={errorsCreate}
-							watch={watchCreate}
-							setValue={setValueCreate}
-							maxDate={new Date("2030-01-01")}
-						/>
-						<FormSelect
-							label="Lecturer"
-							data={getLecturersData()}
-							name="lecturerId"
-							register={registerCreate}
-							errors={errorsCreate}
-						/>
-						<FormSelect
-							label="Room"
-							data={getCabinetsData()}
-							name="cabinetRoomName"
-							register={registerCreate}
-							errors={errorsCreate}
-						/>
-						<FormSelect
-							label="Type"
-							data={getEventFormTypesData()}
-							name="eventFormType"
-							register={registerCreate}
-							errors={errorsCreate}
-						/>
+          >
+            <FormSelect
+              label="Discipline"
+              data={getDisciplinesData()}
+              name="disciplineName"
+              register={registerCreate}
+              errors={errorsCreate}
+            />
+            <FormDateTime
+              name="eventDateTime"
+              register={registerCreate}
+              errors={errorsCreate}
+              watch={watchCreate}
+              setValue={setValueCreate}
+              maxDate={new Date("2030-01-01")}
+              label="Event date and time"
+            />
+            <FormSelect
+              label="Lecturer"
+              data={getLecturersData()}
+              name="lecturerId"
+              register={registerCreate}
+              errors={errorsCreate}
+            />
+            <FormSelect
+              label="Room"
+              data={getCabinetsData()}
+              name="cabinetRoomName"
+              register={registerCreate}
+              errors={errorsCreate}
+            />
+            <FormSelect
+              label="Type"
+              data={getEventFormTypesData()}
+              name="eventFormType"
+              register={registerCreate}
+              errors={errorsCreate}
+            />
           </ModalCreate>
         </div>
 
-				<div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Input
+            type="text"
+            label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -337,38 +406,52 @@ export default function ExamsPage() {
                 <TableColumn
                   key={column.key}
                   className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+                  onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  {column.label}
+                  <div className="flex items-center">
+                    <span>{column.label}</span>
+                    <span className="scale-125">
+                      {column.sortable && sortColumn === column.key ? (
+                        sortDirection === "asc" ? (
+                          <TiArrowDownThick />
+                        ) : (
+                          <TiArrowUpThick />
+                        )
+                      ) : null}
+                    </span>
+                  </div>
                 </TableColumn>
               )}
             </TableHeader>
             <TableBody items={items}>
               {(item) => (
                 <TableRow key={item.id}>
-									{(columnKey) =>
-										columnKey === "lecturerId" ? (
-											<TableCell className="py-3 px-2">
-												{getFIOLecturerById(item.lecturerId)}
-											</TableCell>
-										) :
-                    columnKey === "actions" ? (
+                  {(columnKey) =>
+                    columnKey === "lecturerId" ? (
+                      <TableCell className="py-3 px-2">
+                        {getFIOLecturerById(item.lecturerId)}
+                      </TableCell>
+                    ) : columnKey === "actions" ? (
                       <TableCell className="flex gap-4">
                         <ModalDetail
                           id={item.id}
                           header="Exam details"
                           fetchData={getExamDiscipline}
-												/>
-												<Tooltip content="Update details">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          color="secondary"
-													onPress={() => { openModal(item); setId(item.id); }}
-                          variant="shadow"
-                          className="scale-85"
-                          startContent={<FiEdit3 className="text-lg" />}
-													/>
-												</Tooltip>
+                        />
+                        <Tooltip content="Update details">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            color="secondary"
+                            onPress={() => {
+                              openModal(item);
+                              setId(item.id);
+                            }}
+                            variant="shadow"
+                            className="scale-85"
+                            startContent={<FiEdit3 className="text-lg" />}
+                          />
+                        </Tooltip>
 
                         <ModalDelete
                           title="Delete exam"
@@ -379,7 +462,7 @@ export default function ExamsPage() {
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
-                        {getKeyValue(item, columnKey)}
+												{renderCell(item, columnKey as string)}
                       </TableCell>
                     )
                   }
@@ -396,39 +479,49 @@ export default function ExamsPage() {
               setIsModalOpen(false);
               resetUpdate();
             }}
-						onSubmit={handleUpdate}
-						isUpdatedSuccess={isCreatedSuccess}
-						setIsUpdatedSuccess={setIsCreatedSuccess}
+            onSubmit={handleUpdate}
+            isUpdatedSuccess={isCreatedSuccess}
+            setIsUpdatedSuccess={setIsCreatedSuccess}
           >
             <FormInput
               name="disciplineName"
               register={registerUpdate}
               errors={errorsUpdate}
               maxLength={100}
-							type="text"
-							label="Discipline Name"
+              type="text"
+              label="Discipline Name"
               setValue={() => {
-                setValueUpdate("disciplineName", selectedItem?.disciplineName || "");
+                setValueUpdate(
+                  "disciplineName",
+                  selectedItem?.disciplineName || ""
+                );
               }}
-						/>
-						<FormDateTime
-							name="eventDatetime"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							watch={watchUpdate}
-							setValue={() => setValueUpdate("eventDatetime", selectedItem?.eventDatetime || "")}
-							value={selectedItem?.eventDatetime}
-						/>
-						<FormSelect
-							label="Lecturer"
-							data={getLecturersData()}
-							name="lecturerId"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							defaultSelectedValue={selectedItem?.lecturerId}
-							setValue={() => setValueUpdate("lecturerId", selectedItem?.lecturerId || "")}
-						/>
-						{/* //TODO: добавить cabinet и event_form_type */}
+            />
+            <FormDateTime
+              name="eventDatetime"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              watch={watchUpdate}
+              setValue={() =>
+                setValueUpdate(
+                  "eventDatetime",
+                  selectedItem?.eventDatetime || ""
+                )
+              }
+              value={selectedItem?.eventDatetime}
+            />
+            <FormSelect
+              label="Lecturer"
+              data={getLecturersData()}
+              name="lecturerId"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              defaultSelectedValue={selectedItem?.lecturerId}
+              setValue={() =>
+                setValueUpdate("lecturerId", selectedItem?.lecturerId || "")
+              }
+            />
+            {/* //TODO: добавить cabinet и event_form_type */}
           </ModalUpdate>
         </div>
       </div>

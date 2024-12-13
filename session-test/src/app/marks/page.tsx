@@ -11,34 +11,28 @@ import {
   Button,
   Pagination,
   Tooltip,
+	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import ModalCreate from "@/components/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/FormInput";
 import ModalDelete from "@/components/ModalDelete";
-import { TiArrowBackOutline } from "react-icons/ti";
+import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
 import FormSelect from "@/components/FormSelect";
-import FormDateOnly from "@/components/FormDateOnly";
 import StatementsPromise from "@/types/Statement/StatementsPromise";
-import StatementDTO from "@/types/Statement/StatementDTO";
 import {
-  createStatement,
-  deleteStatement,
-  getStatement,
   getStatements,
 } from "@/api/statementApi";
-import ExamDisciplinesPromise from "@/types/ExamDiscipline/ExamDisciplinesPromise";
-import { getExamDisciplines } from "@/api/examDisciplineApi";
 import MarksPromise from "@/types/Mark/MarksPromise";
 import StudentsPromise from "@/types/Student/StudentsPromise";
 import MarkDTO from "@/types/Mark/MarkDTO";
 import { createMark, deleteMark, getMark, getMarks } from "@/api/markApi";
 import { getStudents } from "@/api/studentApi";
+import sortData from "@/functions/sortData";
 
 let cachedStatements: string[] | null = null;
 let cachedStudents: string[] | null = null;
@@ -49,15 +43,49 @@ export default function MarksPage() {
 		useState<StatementsPromise>();
 	const [students, setStudents] = useState<StudentsPromise>();
 
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortColumn, setSortColumn] = useState<string | null>(null);
+	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");	
+
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
   const [page, setPage] = useState(1);
   const rowsPerPage = 5;
-  let pages = 0;
+	let pages = 0;
+
+				const filteredMarks = useMemo(() => {
+  if (!searchQuery.trim()) return marks?.$values || [];
+  const lowerQuery = searchQuery.toLowerCase();
+
+  const matchesQuery = (obj: any): boolean => {
+    return Object.entries(obj).some(([key, value]) => {
+      const normalizedKey = key.trim().toLowerCase();
+      if (["id", "$id", "lecturerid", "disciplineid", "cabinetid", "eventformtypeid", "examdisciplineid"].includes(normalizedKey)) {
+        return false;
+      }
+      if (typeof value === "string") {
+        return value.toLowerCase().includes(lowerQuery);
+      }
+      if (typeof value === "object" && value !== null) {
+        return matchesQuery(value);
+      }
+      return false;
+    });
+  };
+
+  return marks?.$values.filter((mark) => matchesQuery(mark)) || [];
+}, [marks, searchQuery]);
+
+	const sortedMarks = useMemo(() => {
+		if (!sortColumn) return filteredMarks;
+		if (!marks) return [];
+    return sortData(filteredMarks, sortColumn as keyof typeof filteredMarks[0], sortDirection);
+	}, [filteredMarks, sortColumn, sortDirection]);	
+
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return marks?.$values.slice(start, end);
-  }, [marks, page]);
+    return sortedMarks.slice(start, end);
+  }, [sortedMarks, page]);
 
   const [selectedItem, setSelectedItem] = useState<MarkDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,7 +123,7 @@ export default function MarksPage() {
 	const [id2, setId2] = useState("");
 
   if (marks) {
-    pages = Math.ceil(marks.$values.length / rowsPerPage);
+    pages = Math.ceil(sortedMarks.length / rowsPerPage);
   }
 
   const handleSubmitBtn = handleSubmitCreate(async (data) => {
@@ -126,7 +154,10 @@ export default function MarksPage() {
       const response = await createMark(data);
       console.log(response);
       if (response.success === true) {
-        const data = await getMarks();
+				const data = await getMarks();
+				data?.$values.forEach((item) => {
+				item.student.fio = `${item.student.surname} ${item.student.firstname} ${item.student.patronymic}`;
+			})
         setMarks(data);
         resetCreate();
         setIsCreatedSuccess(true);
@@ -144,7 +175,10 @@ export default function MarksPage() {
       const response = await deleteMark(studentId, statementId);
       console.log(response);
       if (response.success === true) {
-        const data = await getMarks();
+				const data = await getMarks();
+				data?.$values.forEach((item) => {
+				item.student.fio = `${item.student.surname} ${item.student.firstname} ${item.student.patronymic}`;
+			})
         setMarks(data);
       } else {
         alert(response.message);
@@ -175,7 +209,12 @@ export default function MarksPage() {
 
   useEffect(() => {
     const fetchMarks = async () => {
-      const data = await getMarks();
+			const data = await getMarks();
+			
+			data?.$values.forEach((item) => {
+				item.student.fio = `${item.student.surname} ${item.student.firstname} ${item.student.patronymic}`;
+			})
+
       setMarks(data);
     };
     fetchMarks();
@@ -202,10 +241,10 @@ export default function MarksPage() {
   }
 
   const columns = [
-		{ key: "mark1", label: "Mark" },
-		{ key: "studentName", label: "FIO" },
-		{ key: "statement.sessionYear", label: "Session Year" },
-    { key: "actions", label: "Actions" },
+		{ key: "mark1", label: "Mark", sortable: true },
+		{ key: "student.fio", label: "FIO", sortable: true },
+		{ key: "statement.sessionYear", label: "Session Year", sortable: true },
+    { key: "actions", label: "Actions", sortable: false },
 	];
 	
 	const getStudentByName = (data: string): { firstname: string; surname: string; patronymic: string }=> {
@@ -273,7 +312,17 @@ export default function MarksPage() {
       return keys.reduce((acc, key) => acc?.[key], data) || "N/A";
     }
     return data[columnKey] || "N/A";
-  };
+	};
+	
+	
+			const handleSort = (key: string) => {
+		if (sortColumn === key) {
+			setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+		} else {
+			setSortColumn(key);
+			setSortDirection("asc");
+		}
+	};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
@@ -327,6 +376,12 @@ export default function MarksPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Input
+            type="text"
+            label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -351,8 +406,20 @@ export default function MarksPage() {
                 <TableColumn
                   key={column.key}
                   className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+                  onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  {column.label}
+                  <div className="flex items-center">
+                    <span>{column.label}</span>
+                    <span className="scale-125">
+                      {column.sortable && sortColumn === column.key ? (
+                        sortDirection === "asc" ? (
+                          <TiArrowDownThick />
+                        ) : (
+                          <TiArrowUpThick />
+                        )
+                      ) : null}
+                    </span>
+                  </div>
                 </TableColumn>
               )}
             </TableHeader>
@@ -360,7 +427,7 @@ export default function MarksPage() {
               {(item) => (
                 <TableRow key={item.$id}>
                   {(columnKey) =>
-                    columnKey === "studentName" ? (
+                    columnKey === "studentId" ? (
                       <TableCell className="py-3 px-2">
                         {getFIOStudentById(item.studentId)}
                       </TableCell>
@@ -424,24 +491,30 @@ export default function MarksPage() {
               data={getMarksData()}
               name="mark1"
               register={registerCreate}
-							errors={errorsCreate}
-							setValue={() => { setValueUpdate("mark1", selectedItem?.mark1 || ""); }}
+              errors={errorsCreate}
+              setValue={() => {
+                setValueUpdate("mark1", selectedItem?.mark1 || "");
+              }}
             />
             <FormSelect
               label="Student"
               data={getStudentsData()}
               name="studentId"
               register={registerCreate}
-							errors={errorsCreate}
-							setValue={() => { setValueUpdate("studentId", selectedItem?.studentId || ""); }}
+              errors={errorsCreate}
+              setValue={() => {
+                setValueUpdate("studentId", selectedItem?.studentId || "");
+              }}
             />
             <FormSelect
               label="Statement"
               data={getStatementsData()}
               name="statementId"
               register={registerCreate}
-							errors={errorsCreate}
-							setValue={() => { setValueUpdate("statementId", selectedItem?.statementId || ""); }}
+              errors={errorsCreate}
+              setValue={() => {
+                setValueUpdate("statementId", selectedItem?.statementId || "");
+              }}
             />
           </ModalUpdate>
         </div>

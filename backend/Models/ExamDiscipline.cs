@@ -30,7 +30,6 @@ public partial class ExamDiscipline
 	[JsonIgnore]
     public virtual EventForm EventFormTypeNavigation { get; set; } = null!;
 
-	[JsonIgnore]
     public virtual Lecturer Lecturer { get; set; } = null!;
 
 	[JsonIgnore]

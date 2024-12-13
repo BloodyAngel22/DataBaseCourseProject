@@ -15,6 +15,7 @@ import {
   Button,
   Pagination,
 	Tooltip,
+	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -22,7 +23,7 @@ import ModalCreate from "@/components/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/FormInput";
 import ModalDelete from "@/components/ModalDelete";
-import { TiArrowBackOutline } from "react-icons/ti";
+import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
@@ -31,18 +32,41 @@ import FormSelect from "@/components/FormSelect";
 import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 import GroupDTO from "@/types/Group/GroupDTO";
 import GroupsPromise from "@/types/Group/GroupsPromise";
+import sortData from "@/functions/sortData";
 
 export default function GroupsPage() {
   const [groups, setGroups] = useState<GroupsPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
-  const [page, setPage] = useState(1);
+	const [page, setPage] = useState(1);
+
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");	
+
   const rowsPerPage = 5;
-  let pages = 0;
+	let pages = 0;
+
+	const filteredGroups = useMemo(() => {
+		if (!searchQuery) return groups?.$values || [];
+		const lowerQuery = searchQuery.toLowerCase();
+		return groups?.$values.filter((group) =>
+			Object.values(group).some((value) =>
+				typeof value === "string" && value.toLowerCase().includes(lowerQuery)
+			)
+		) || [];
+	}, [groups, searchQuery]);
+
+	const sortedGroups = useMemo(() => {
+		if (!sortColumn) return filteredGroups;
+		if (!groups) return [];
+    return sortData(filteredGroups, sortColumn as keyof typeof filteredGroups[0], sortDirection);
+	}, [filteredGroups, sortColumn, sortDirection]);	
+
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return groups?.$values.slice(start, end);
-  }, [groups, page]);
+    return sortedGroups.slice(start, end);
+  }, [sortedGroups, page]);
 
   const [selectedItem, setSelectedItem] = useState<GroupDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -70,7 +94,7 @@ export default function GroupsPage() {
   const [id, setId] = useState("");
 
   if (groups) {
-    pages = Math.ceil(groups.$values.length / rowsPerPage);
+    pages = Math.ceil(sortedGroups.length / rowsPerPage);
   }
 
 	const handleSubmitBtn = handleSubmitCreate(async (data) => {
@@ -138,9 +162,9 @@ export default function GroupsPage() {
   }
 
   const columns = [
-    { key: "name", label: "Name" },
-    { key: "departmentName", label: "Department" },
-    { key: "actions", label: "Actions" },
+    { key: "name", label: "Name", sortable: true },
+    { key: "departmentName", label: "Department", sortable: true },
+    { key: "actions", label: "Actions", sortable: false },
 	];
 	
 	const getDepartmentsData = async () => {
@@ -152,11 +176,20 @@ export default function GroupsPage() {
 		return departments;
 	}
 
+	const handleSort = (key: string) => {
+		if (sortColumn === key) {
+			setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+		} else {
+			setSortColumn(key);
+			setSortDirection("asc");
+		}
+	};
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
       <div className="container mx-auto">
-				<h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
-					Groups
+        <h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
+          Groups
         </h1>
 
         <div className="flex justify-between items-center mb-6">
@@ -186,18 +219,24 @@ export default function GroupsPage() {
               maxLength={100}
               type="text"
               label="Name"
-						/>
-						<FormSelect
-							label="Department"
-							data={getDepartmentsData()}
-							name="departmentName"
-							register={registerCreate}
-							errors={errorsCreate}
-						/>
+            />
+            <FormSelect
+              label="Department"
+              data={getDepartmentsData()}
+              name="departmentName"
+              register={registerCreate}
+              errors={errorsCreate}
+            />
           </ModalCreate>
         </div>
 
-				<div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Input
+            type="text"
+            label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -222,8 +261,20 @@ export default function GroupsPage() {
                 <TableColumn
                   key={column.key}
                   className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+                  onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  {column.label}
+                  <div className="flex items-center">
+                    <span>{column.label}</span>
+                    <span className="scale-125">
+                      {column.sortable && sortColumn === column.key ? (
+                        sortDirection === "asc" ? (
+                          <TiArrowDownThick />
+                        ) : (
+                          <TiArrowUpThick />
+                        )
+                      ) : null}
+                    </span>
+                  </div>
                 </TableColumn>
               )}
             </TableHeader>
@@ -237,18 +288,21 @@ export default function GroupsPage() {
                           id={item.name}
                           header="Group details"
                           fetchData={getGroup}
-												/>
-												<Tooltip content="Update details">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          color="secondary"
-													onPress={() => { openModal(item); setId(item.name); }}
-                          variant="shadow"
-                          className="scale-85"
-                          startContent={<FiEdit3 className="text-lg" />}
-													/>
-												</Tooltip>
+                        />
+                        <Tooltip content="Update details">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            color="secondary"
+                            onPress={() => {
+                              openModal(item);
+                              setId(item.name);
+                            }}
+                            variant="shadow"
+                            className="scale-85"
+                            startContent={<FiEdit3 className="text-lg" />}
+                          />
+                        </Tooltip>
 
                         <ModalDelete
                           title="Delete group"
@@ -276,30 +330,35 @@ export default function GroupsPage() {
               setIsModalOpen(false);
               resetUpdate();
             }}
-						onSubmit={handleUpdate}
-						isUpdatedSuccess={isCreatedSuccess}
-						setIsUpdatedSuccess={setIsCreatedSuccess}
+            onSubmit={handleUpdate}
+            isUpdatedSuccess={isCreatedSuccess}
+            setIsUpdatedSuccess={setIsCreatedSuccess}
           >
             <FormInput
               name="name"
               register={registerUpdate}
               errors={errorsUpdate}
               maxLength={100}
-							type="text"
-							label="Name"
+              type="text"
+              label="Name"
               setValue={() => {
                 setValueUpdate("name", selectedItem?.name || "");
               }}
-						/>
-						<FormSelect
-							label="Department"
-							data={getDepartmentsData()}
-							name="departmentName"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							defaultSelectedValue={selectedItem?.departmentName}
-							setValue={() => setValueUpdate("departmentName", selectedItem?.departmentName || "ww")}
-						/>
+            />
+            <FormSelect
+              label="Department"
+              data={getDepartmentsData()}
+              name="departmentName"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              defaultSelectedValue={selectedItem?.departmentName}
+              setValue={() =>
+                setValueUpdate(
+                  "departmentName",
+                  selectedItem?.departmentName || "ww"
+                )
+              }
+            />
           </ModalUpdate>
         </div>
       </div>

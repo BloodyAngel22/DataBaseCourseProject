@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
 namespace backend.Controllers
 {
@@ -24,7 +25,28 @@ namespace backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ExamDiscipline>>> GetExamDisciplines()
         {
-            return await _context.ExamDisciplines.ToListAsync();
+			var exams = await _context.ExamDisciplines
+				.Include(e => e.Lecturer)
+				.Select(exam => new ExamDiscipline
+				{
+					Id = exam.Id,
+					DisciplineName = exam.DisciplineName,
+					LecturerId = exam.LecturerId,
+					EventDatetime = exam.EventDatetime,
+					CabinetRoomName = exam.CabinetRoomName,
+					EventFormType = exam.EventFormType,
+					Lecturer = new Lecturer
+					{
+						Id = exam.Lecturer.Id,
+						Firstname = exam.Lecturer.Firstname,
+						Surname = exam.Lecturer.Surname,
+						Patronymic = exam.Lecturer.Patronymic,
+						Birthdate = exam.Lecturer.Birthdate,
+						DepartmentName = exam.Lecturer.DepartmentName
+					}
+				})
+				.ToListAsync();
+			return exams;
         }
 
         // GET: api/ExamDiscipline/5

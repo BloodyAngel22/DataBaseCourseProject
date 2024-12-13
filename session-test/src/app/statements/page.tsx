@@ -8,10 +8,10 @@ import {
   TableBody,
   TableCell,
   TableRow,
-  getKeyValue,
   Button,
   Pagination,
 	Tooltip,
+	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -19,38 +19,68 @@ import ModalCreate from "@/components/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/FormInput";
 import ModalDelete from "@/components/ModalDelete";
-import { TiArrowBackOutline } from "react-icons/ti";
+import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
-import { getGroups } from "@/api/groupApi";
 import FormSelect from "@/components/FormSelect";
-import GroupsPromise from "@/types/Group/GroupsPromise";
 import FormDateOnly from "@/components/FormDateOnly";
-import StudentsPromise from "@/types/Student/StudentsPromise";
-import StudentDTO from "@/types/Student/StudentDTO";
-import { createStudent, deleteStudent, getStudent, getStudents } from "@/api/studentApi";
 import StatementsPromise from "@/types/Statement/StatementsPromise";
 import StatementDTO from "@/types/Statement/StatementDTO";
 import { createStatement, deleteStatement, getStatement, getStatements } from "@/api/statementApi";
 import ExamDisciplinesPromise from "@/types/ExamDiscipline/ExamDisciplinesPromise";
-import { getExamDiscipline, getExamDisciplines } from "@/api/examDisciplineApi";
-import { i } from "framer-motion/client";
+import { getExamDisciplines } from "@/api/examDisciplineApi";
+import sortData from "@/functions/sortData";
 
 let cachedExamDisciplines: string[] | null = null;
 
 export default function StatementsPage() {
 	const [statements, setStatements] = useState<StatementsPromise>();
 	const [examDisciplines, setExamDisciplines] = useState<ExamDisciplinesPromise>();
-  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
-  const [page, setPage] = useState(1);
+	const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
+	const [page, setPage] = useState(1);
+
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortColumn, setSortColumn] = useState<string | null>(null);
+	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");	
+
   const rowsPerPage = 5;
-  let pages = 0;
+	let pages = 0;
+
+			const filteredStatements = useMemo(() => {
+  if (!searchQuery.trim()) return statements?.$values || [];
+  const lowerQuery = searchQuery.toLowerCase();
+
+  const matchesQuery = (obj: any): boolean => {
+    return Object.entries(obj).some(([key, value]) => {
+      const normalizedKey = key.trim().toLowerCase();
+      if (["id", "$id", "lecturerid", "disciplineid", "cabinetid", "eventformtypeid", "examdisciplineid"].includes(normalizedKey)) {
+        return false;
+      }
+      if (typeof value === "string") {
+        return value.toLowerCase().includes(lowerQuery);
+      }
+      if (typeof value === "object" && value !== null) {
+        return matchesQuery(value);
+      }
+      return false;
+    });
+  };
+
+  return statements?.$values.filter((statement) => matchesQuery(statement)) || [];
+}, [statements, searchQuery]);
+
+	const sortedStatements = useMemo(() => {
+		if (!sortColumn) return filteredStatements;
+		if (!statements) return [];
+    return sortData(filteredStatements, sortColumn as keyof typeof filteredStatements[0], sortDirection);
+	}, [filteredStatements, sortColumn, sortDirection]);	
+
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return statements?.$values.slice(start, end);
-  }, [statements, page]);
+    return sortedStatements.slice(start, end);
+  }, [sortedStatements, page]);
 
   const [selectedItem, setSelectedItem] = useState<StatementDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,7 +111,7 @@ export default function StatementsPage() {
   const [id, setId] = useState("");
 
   if (statements) {
-    pages = Math.ceil(statements.$values.length / rowsPerPage);
+    pages = Math.ceil(sortedStatements.length / rowsPerPage);
   }
 
 	const handleSubmitBtn = handleSubmitCreate(async (data) => {
@@ -165,12 +195,12 @@ export default function StatementsPage() {
   }
 
 	const columns = [
-		{ key: "examDiscipline.disciplineName", label: "Discipline Name" },
-		{ key: "examDiscipline.eventFormType", label: "Event Form Type" },
-		{ key: "examDiscipline.eventDatetime", label: "Event Date Time" },
-    { key: "sessionYear", label: "Session Year" },
-    { key: "dateIssued", label: "Date Issued" },
-    { key: "actions", label: "Actions" },
+		{ key: "examDiscipline.disciplineName", label: "Discipline Name", sortable: true },
+		{ key: "examDiscipline.eventFormType", label: "Event Form Type", sortable: true },
+		{ key: "examDiscipline.eventDatetime", label: "Event Date Time", sortable: true },
+    { key: "sessionYear", label: "Session Year", sortable: true },
+    { key: "dateIssued", label: "Date Issued", sortable: true },
+    { key: "actions", label: "Actions", sortable: false },
 	];
 	
 	const getExamDisciplineByNameDate = (data: string): { examDiscipline: string; date: string } => {
@@ -200,13 +230,22 @@ export default function StatementsPage() {
       return keys.reduce((acc, key) => acc?.[key], data) || "N/A";
     }
     return data[columnKey] || "N/A";
-  };
+	};
+	
+			const handleSort = (key: string) => {
+		if (sortColumn === key) {
+			setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+		} else {
+			setSortColumn(key);
+			setSortDirection("asc");
+		}
+	};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
       <div className="container mx-auto">
-				<h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
-					Statements
+        <h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
+          Statements
         </h1>
 
         <div className="flex justify-between items-center mb-6">
@@ -229,35 +268,41 @@ export default function StatementsPage() {
             setIsCreatedSuccess={setIsCreatedSuccess}
             isCreatedSuccess={isCreatedSuccess}
           >
-						<FormSelect
-							label="Exam Discipline"
-							data={(getExamDisciplinesData())}
-							name="examDisciplineId"
-							register={registerCreate}
-							errors={errorsCreate}
-						/>
-						<FormInput
-							name="sessionYear"
-							register={registerCreate}
-							errors={errorsCreate}
-							label="Session Year"
-							type="number"
-							min={1900}
-							max={2100}
-						/>
-						<FormDateOnly
-							name="dateIssued"
-							label="Date Issued"
-							register={registerCreate}
-							errors={errorsCreate}
-							watch={watchCreate}
-							setValue={setValueCreate}
-							maxDate={new Date("2100-01-01")}
-						/>
+            <FormSelect
+              label="Exam Discipline"
+              data={getExamDisciplinesData()}
+              name="examDisciplineId"
+              register={registerCreate}
+              errors={errorsCreate}
+            />
+            <FormInput
+              name="sessionYear"
+              register={registerCreate}
+              errors={errorsCreate}
+              label="Session Year"
+              type="number"
+              min={1900}
+              max={2100}
+            />
+            <FormDateOnly
+              name="dateIssued"
+              label="Date Issued"
+              register={registerCreate}
+              errors={errorsCreate}
+              watch={watchCreate}
+              setValue={setValueCreate}
+              maxDate={new Date("2100-01-01")}
+            />
           </ModalCreate>
         </div>
 
-				<div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Input
+            type="text"
+            label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -282,8 +327,20 @@ export default function StatementsPage() {
                 <TableColumn
                   key={column.key}
                   className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+                  onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  {column.label}
+                  <div className="flex items-center">
+                    <span>{column.label}</span>
+                    <span className="scale-125">
+                      {column.sortable && sortColumn === column.key ? (
+                        sortDirection === "asc" ? (
+                          <TiArrowDownThick />
+                        ) : (
+                          <TiArrowUpThick />
+                        )
+                      ) : null}
+                    </span>
+                  </div>
                 </TableColumn>
               )}
             </TableHeader>
@@ -297,18 +354,21 @@ export default function StatementsPage() {
                           id={item.id}
                           header="Statement details"
                           fetchData={getStatement}
-												/>
-												<Tooltip content="Update details">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          color="secondary"
-													onPress={() => { openModal(item); setId(item.id); }}
-                          variant="shadow"
-                          className="scale-85"
-                          startContent={<FiEdit3 className="text-lg" />}
-													/>
-												</Tooltip>
+                        />
+                        <Tooltip content="Update details">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            color="secondary"
+                            onPress={() => {
+                              openModal(item);
+                              setId(item.id);
+                            }}
+                            variant="shadow"
+                            className="scale-85"
+                            startContent={<FiEdit3 className="text-lg" />}
+                          />
+                        </Tooltip>
 
                         <ModalDelete
                           title="Delete statement"
@@ -319,8 +379,8 @@ export default function StatementsPage() {
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
-													{/* {getKeyValue(item, columnKey)} */}
-													{renderCell(item, columnKey as string)}
+                        {/* {getKeyValue(item, columnKey)} */}
+                        {renderCell(item, columnKey as string)}
                       </TableCell>
                     )
                   }
@@ -337,38 +397,47 @@ export default function StatementsPage() {
               setIsModalOpen(false);
               resetUpdate();
             }}
-						onSubmit={handleUpdate}
-						isUpdatedSuccess={isCreatedSuccess}
-						setIsUpdatedSuccess={setIsCreatedSuccess}
+            onSubmit={handleUpdate}
+            isUpdatedSuccess={isCreatedSuccess}
+            setIsUpdatedSuccess={setIsCreatedSuccess}
           >
-						<FormSelect
-							label="Exam Discipline"
-							data={getExamDisciplinesData()}
-							name="examDisciplineId"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							defaultSelectedValue={selectedItem?.examDisciplineId}
-							setValue={() => setValueUpdate("examDisciplineId", selectedItem?.examDisciplineId || "")}
-						/>
-						<FormInput
-							name="sessionYear"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							label="Session Year"
-							type="number"
-							min={1900}
-							max={2100}
-							setValue={() => setValueUpdate("sessionYear", selectedItem?.sessionYear || 0)}
-						/>
-						<FormDateOnly
-							name="dateIssued"
-							label="Date Issued"
-							register={registerUpdate}
-							errors={errorsUpdate}
-							watch={watchUpdate}
-							setValue={() => setValueUpdate("dateIssued", selectedItem?.dateIssued || "")}
-							value={selectedItem?.dateIssued}
-						/>
+            <FormSelect
+              label="Exam Discipline"
+              data={getExamDisciplinesData()}
+              name="examDisciplineId"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              defaultSelectedValue={selectedItem?.examDisciplineId}
+              setValue={() =>
+                setValueUpdate(
+                  "examDisciplineId",
+                  selectedItem?.examDisciplineId || ""
+                )
+              }
+            />
+            <FormInput
+              name="sessionYear"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              label="Session Year"
+              type="number"
+              min={1900}
+              max={2100}
+              setValue={() =>
+                setValueUpdate("sessionYear", selectedItem?.sessionYear || 0)
+              }
+            />
+            <FormDateOnly
+              name="dateIssued"
+              label="Date Issued"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              watch={watchUpdate}
+              setValue={() =>
+                setValueUpdate("dateIssued", selectedItem?.dateIssued || "")
+              }
+              value={selectedItem?.dateIssued}
+            />
           </ModalUpdate>
         </div>
       </div>

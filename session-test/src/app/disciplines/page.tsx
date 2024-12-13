@@ -19,6 +19,7 @@ import {
   Button,
   Pagination,
 	Tooltip,
+	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -26,7 +27,7 @@ import ModalCreate from "@/components/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/FormInput";
 import ModalDelete from "@/components/ModalDelete";
-import { TiArrowBackOutline } from "react-icons/ti";
+import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
@@ -35,18 +36,41 @@ import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 import DisciplinesPromise from "@/types/Discipline/DisciplinesPromise";
 import DisciplineDTO from "@/types/Discipline/DisciplineDTO";
 import { createDiscipline, deleteDiscipline, getDiscipline, getDisciplines, updateDiscipline } from "@/api/disciplineApi";
+import sortData from "@/functions/sortData";
 
 export default function DisciplinesPage() {
   const [disciplines, setDisciplines] = useState<DisciplinesPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
-  const [page, setPage] = useState(1);
+	const [page, setPage] = useState(1);
+
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const rowsPerPage = 5;
-  let pages = 0;
+	let pages = 0;
+	
+	const filteredDisciplines = useMemo(() => {
+		if (!searchQuery) return disciplines?.$values || [];
+		const lowerQuery = searchQuery.toLowerCase();
+		return disciplines?.$values.filter((discipline) =>
+			Object.values(discipline).some((value) =>
+				typeof value === "string" && value.toLowerCase().includes(lowerQuery)
+			)
+		) || [];
+	}, [disciplines, searchQuery]);
+
+	const sortedDisciplines = useMemo(() => {
+		if (!sortColumn) return filteredDisciplines;
+		if (!disciplines) return [];
+    return sortData(filteredDisciplines, sortColumn as keyof typeof filteredDisciplines[0], sortDirection);
+	}, [filteredDisciplines, sortColumn, sortDirection]);
+
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return disciplines?.$values.slice(start, end);
-  }, [disciplines, page]);
+    return sortedDisciplines.slice(start, end);
+  }, [sortedDisciplines, page]);
 
   const [selectedItem, setSelectedItem] = useState<DisciplineDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,7 +98,7 @@ export default function DisciplinesPage() {
   const [id, setId] = useState("");
 
   if (disciplines) {
-    pages = Math.ceil(disciplines.$values.length / rowsPerPage);
+    pages = Math.ceil(sortedDisciplines.length / rowsPerPage);
   }
 
   const handleSubmitBtn = handleSubmitCreate(async (data) => {
@@ -145,9 +169,18 @@ export default function DisciplinesPage() {
   }
 
   const columns = [
-    { key: "name", label: "Name" },
-    { key: "actions", label: "Actions" },
-  ];
+    { key: "name", label: "Name", sortable: true },
+    { key: "actions", label: "Actions", sortable: false },
+	];
+
+		const handleSort = (key: string) => {
+		if (sortColumn === key) {
+			setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+		} else {
+			setSortColumn(key);
+			setSortDirection("asc");
+		}
+	};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
@@ -187,7 +220,13 @@ export default function DisciplinesPage() {
           </ModalCreate>
         </div>
 
-				<div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Input
+            type="text"
+            label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -212,8 +251,20 @@ export default function DisciplinesPage() {
                 <TableColumn
                   key={column.key}
                   className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+                  onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  {column.label}
+                  <div className="flex items-center">
+                    <span>{column.label}</span>
+                    <span className="scale-125">
+                      {column.sortable && sortColumn === column.key ? (
+                        sortDirection === "asc" ? (
+                          <TiArrowDownThick />
+                        ) : (
+                          <TiArrowUpThick />
+                        )
+                      ) : null}
+                    </span>
+                  </div>
                 </TableColumn>
               )}
             </TableHeader>
@@ -227,18 +278,21 @@ export default function DisciplinesPage() {
                           id={item.name}
                           header="Discipline details"
                           fetchData={getDiscipline}
-												/>
-												<Tooltip content="Update details">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          color="secondary"
-													onPress={() => { openModal(item); setId(item.name); }}
-                          variant="shadow"
-                          className="scale-85"
-                          startContent={<FiEdit3 className="text-lg" />}
-													/>
-												</Tooltip>
+                        />
+                        <Tooltip content="Update details">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            color="secondary"
+                            onPress={() => {
+                              openModal(item);
+                              setId(item.name);
+                            }}
+                            variant="shadow"
+                            className="scale-85"
+                            startContent={<FiEdit3 className="text-lg" />}
+                          />
+                        </Tooltip>
 
                         <ModalDelete
                           title="Delete discipline"
@@ -266,17 +320,17 @@ export default function DisciplinesPage() {
               setIsModalOpen(false);
               resetUpdate();
             }}
-						onSubmit={handleUpdate}
-						isUpdatedSuccess={isCreatedSuccess}
-						setIsUpdatedSuccess={setIsCreatedSuccess}
+            onSubmit={handleUpdate}
+            isUpdatedSuccess={isCreatedSuccess}
+            setIsUpdatedSuccess={setIsCreatedSuccess}
           >
             <FormInput
               name="name"
               register={registerUpdate}
               errors={errorsUpdate}
               maxLength={100}
-							type="text"
-							label="Name"
+              type="text"
+              label="Name"
               setValue={() => {
                 setValueUpdate("name", selectedItem?.name || "");
               }}

@@ -19,6 +19,7 @@ import {
   Button,
   Pagination,
 	Tooltip,
+	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -26,24 +27,47 @@ import ModalCreate from "@/components/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/FormInput";
 import ModalDelete from "@/components/ModalDelete";
-import { TiArrowBackOutline } from "react-icons/ti";
+import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
 import DepartmentDTO from "@/types/Department/DepartmentDTO";
 import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
+import sortData from "../../functions/sortData";
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<DepartmentsPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
   const [page, setPage] = useState(1);
+
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const rowsPerPage = 5;
-  let pages = 0;
-  const items = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return departments?.$values.slice(start, end);
-  }, [departments, page]);
+	let pages = 0;
+	
+	const filteredDepartments = useMemo(() => {
+		if (!searchQuery) return departments?.$values || [];
+		const lowerQuery = searchQuery.toLowerCase();
+		return departments?.$values.filter((department) =>
+			Object.values(department).some((value) =>
+				typeof value === "string" && value.toLowerCase().includes(lowerQuery)
+			)
+		) || [];
+	}, [departments, searchQuery]);
+
+	const sortedDepartments = useMemo(() => {
+		if (!sortColumn) return filteredDepartments;
+		if (!departments) return [];
+    return sortData(filteredDepartments, sortColumn as keyof typeof filteredDepartments[0], sortDirection);
+	}, [filteredDepartments, sortColumn, sortDirection]);
+
+	const paginatedDepartments = useMemo(() => {
+		const start = (page - 1) * rowsPerPage;
+		const end = start + rowsPerPage;
+		return sortedDepartments.slice(start, end);
+	}, [sortedDepartments, page]);
 
   const [selectedItem, setSelectedItem] = useState<DepartmentDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,7 +95,7 @@ export default function DepartmentsPage() {
   const [id, setId] = useState("");
 
   if (departments) {
-    pages = Math.ceil(departments.$values.length / rowsPerPage);
+    pages = Math.ceil(sortedDepartments.length / rowsPerPage);
   }
 
   const handleSubmitBtn = handleSubmitCreate(async (data) => {
@@ -142,9 +166,18 @@ export default function DepartmentsPage() {
   }
 
   const columns = [
-    { key: "name", label: "Name" },
-    { key: "actions", label: "Actions" },
+    { key: "name", label: "Name", sortable: true },
+    { key: "actions", label: "Actions", sortable: false },
 	];
+
+	const handleSort = (key: string) => {
+    if (sortColumn === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortColumn(key);
+      setSortDirection("asc");
+    }
+	};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
@@ -185,6 +218,8 @@ export default function DepartmentsPage() {
         </div>
 
 				<div className="bg-white rounded-lg shadow overflow-hidden">
+					<Input type="text" label="Search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}/>
+
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -209,12 +244,19 @@ export default function DepartmentsPage() {
                 <TableColumn
                   key={column.key}
 									className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
-                >
-									{column.label}
+									onClick={() => column.sortable && handleSort(column.key)}
+								>
+									<div className="flex items-center">
+										<span>{column.label}</span>
+										<span className="scale-125">
+											{column.sortable && sortColumn === column.key ? sortDirection === "asc" ? <TiArrowDownThick /> : <TiArrowUpThick /> : null}
+										</span>
+									</div>
+									
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={paginatedDepartments}>
               {(item) => (
                 <TableRow key={item.name}>
                   {(columnKey) =>

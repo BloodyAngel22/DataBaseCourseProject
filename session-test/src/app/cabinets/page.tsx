@@ -12,6 +12,7 @@ import {
   Button,
   Pagination,
 	Tooltip,
+	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -19,25 +20,48 @@ import ModalCreate from "@/components/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/FormInput";
 import ModalDelete from "@/components/ModalDelete";
-import { TiArrowBackOutline } from "react-icons/ti";
+import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
 import { createCabinet, deleteCabinet, getCabinet, getCabinets, updateCabinet } from "@/api/cabinetApi";
 import CabinetDTO from "@/types/Cabinet/CabinetDTO";
 import CabinetsPromise from "@/types/Cabinet/CabinetsPromise";
+import sortData from "../../functions/sortData";
 
 export default function CabinetsPage() {
   const [cabinets, setCabinets] = useState<CabinetsPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
-  const [page, setPage] = useState(1);
+	const [page, setPage] = useState(1);
+	
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const rowsPerPage = 5;
-  let pages = 0;
+	let pages = 0;
+
+	const filteredCabinets = useMemo(() => {
+		if (!searchQuery) return cabinets?.$values || [];
+		const lowerQuery = searchQuery.toLowerCase();
+		return cabinets?.$values.filter((cabinet) =>
+			Object.values(cabinet).some((value) =>
+				typeof value === "string" && value.toLowerCase().includes(lowerQuery)
+			)
+		) || [];
+	}, [cabinets, searchQuery]);
+
+	const sortedCabinets = useMemo(() => {
+		if (!sortColumn) return filteredCabinets;
+		if (!cabinets) return [];
+    return sortData(filteredCabinets, sortColumn as keyof typeof filteredCabinets[0], sortDirection);
+	}, [filteredCabinets, sortColumn, sortDirection]);
+
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return cabinets?.$values.slice(start, end);
-  }, [cabinets, page]);
+    return sortedCabinets.slice(start, end);
+  }, [sortedCabinets, page]);
 
   const [selectedItem, setSelectedItem] = useState<CabinetDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,7 +89,7 @@ export default function CabinetsPage() {
   const [id, setId] = useState("");
 
   if (cabinets) {
-    pages = Math.ceil(cabinets.$values.length / rowsPerPage);
+    pages = Math.ceil(sortedCabinets.length / rowsPerPage);
   }
 
   const handleSubmitBtn = handleSubmitCreate(async (data) => {
@@ -136,9 +160,18 @@ export default function CabinetsPage() {
   }
 
   const columns = [
-    { key: "roomName", label: "Name" },
-    { key: "actions", label: "Actions" },
-  ];
+    { key: "roomName", label: "Name", sortable: true },
+    { key: "actions", label: "Actions", sortable: false },
+	];
+	
+	const handleSort = (key: string) => {
+		if (sortColumn === key) {
+			setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+		} else {
+			setSortColumn(key);
+			setSortDirection("asc");
+		}
+	};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
@@ -179,6 +212,7 @@ export default function CabinetsPage() {
         </div>
 
 				<div className="bg-white rounded-lg shadow overflow-hidden">
+					<Input type="text" label="Search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -202,9 +236,15 @@ export default function CabinetsPage() {
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+									className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+									onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  {column.label}
+									<div className="flex items-center">
+										<span>{column.label}</span>
+										<span className="scale-125">
+											{column.sortable && sortColumn === column.key ? sortDirection === "asc" ? <TiArrowDownThick /> : <TiArrowUpThick /> : null}
+										</span>
+									</div>
                 </TableColumn>
               )}
             </TableHeader>
