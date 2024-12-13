@@ -46,7 +46,7 @@ export default function ModalUpdate({
         isKeyboardDismissDisabled={true}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-				scrollBehavior="inside"
+				scrollBehavior="outside"
 				onClose={onClose}
       >
         <ModalContent>

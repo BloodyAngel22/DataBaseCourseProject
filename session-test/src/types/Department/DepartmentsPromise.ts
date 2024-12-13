@@ -1,4 +1,4 @@
-export interface DepartmentsPromise {
+export default interface DepartmentsPromise {
 	$id: string;
 	$values: {
 		$id: string;

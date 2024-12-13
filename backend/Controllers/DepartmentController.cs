@@ -102,8 +102,23 @@ namespace backend.Controllers
 				return NotFound();
 			}
 
-			_context.Departments.Remove(department);
-			await _context.SaveChangesAsync();
+			try
+			{
+				_context.Departments.Remove(department);
+				await _context.SaveChangesAsync();
+			}
+			catch (DbUpdateException ex)
+			{
+				if (ex.InnerException != null)
+				{
+					if (ex.InnerException.Message.Contains("Cannot delete or update a parent row: a foreign key constraint fails") ||
+					 ex.InnerException.Message.Contains("23503: update or delete on table"))
+					{
+						return Conflict(new { message = "Cannot delete department with associated groups" });
+					}
+				}
+				return Conflict("Something went wrong");
+			}
 
 			return NoContent();
 		}

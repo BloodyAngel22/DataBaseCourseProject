@@ -46,30 +46,15 @@ namespace backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCabinet(string id, Cabinet cabinet)
         {
-            if (id != cabinet.RoomName)
-            {
-                return BadRequest();
-            }
+           var existingCabinet = await _context.Cabinets.FindAsync(id);
 
-            _context.Entry(cabinet).State = EntityState.Modified;
+		   if (existingCabinet == null) return NotFound(new { message = "Cabinet not found" }); 
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CabinetExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+		   var newName = cabinet.RoomName;
 
-            return NoContent();
+		   await _context.Database.ExecuteSqlInterpolatedAsync($"Update cabinet set room_name = {newName} where room_name = {id}");
+
+		   return NoContent();
         }
 
         // POST: api/Cabinet

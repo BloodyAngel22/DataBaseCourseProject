@@ -21,17 +21,37 @@ namespace backend.Controllers
         }
 
         // GET: api/Statement
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Statement>>> GetStatements()
-        {
-            return await _context.Statements.ToListAsync();
-        }
+		[HttpGet]
+		public async Task<ActionResult<IEnumerable<Statement>>> GetStatements()
+		{
+			var statements = await _context.Statements
+				.Include(x => x.ExamDiscipline)
+				.Select(statement => new Statement
+				{
+					Id = statement.Id,
+					ExamDisciplineId = statement.ExamDisciplineId,
+					SessionYear = statement.SessionYear,
+					DateIssued = statement.DateIssued,
+					ExamDiscipline = new ExamDiscipline
+					{
+						Id = statement.ExamDiscipline.Id,
+						DisciplineName = statement.ExamDiscipline.DisciplineName,
+						EventDatetime = statement.ExamDiscipline.EventDatetime,
+						LecturerId = statement.ExamDiscipline.LecturerId,
+						CabinetRoomName = statement.ExamDiscipline.CabinetRoomName,
+						EventFormType = statement.ExamDiscipline.EventFormType
+					}
+				})
+				.ToListAsync();
 
-        // GET: api/Statement/5
-        [HttpGet("{id}")]
+			return statements;
+		}
+
+		// GET: api/Statement/5
+		[HttpGet("{id}")]
         public async Task<ActionResult<Statement>> GetStatement(Guid id)
         {
-            var statement = await _context.Statements.FindAsync(id);
+            var statement = await _context.Statements.Include(x => x.ExamDiscipline).FirstOrDefaultAsync(x => x.Id == id);
 
             if (statement == null)
             {
@@ -46,10 +66,9 @@ namespace backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutStatement(Guid id, Statement statement)
         {
-            if (id != statement.Id)
-            {
-                return BadRequest();
-            }
+			var existingStatement = await _context.Statements.FindAsync(id);
+
+			if (existingStatement == null) return NotFound(new { message = "Statement not found" });
 
             _context.Entry(statement).State = EntityState.Modified;
 
@@ -71,16 +90,50 @@ namespace backend.Controllers
 
             return NoContent();
         }
+		public record StatementDTO(string ExamDisciplineId, string SessionYear, string DateIssued);
 
-        // POST: api/Statement
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Statement>> PostStatement(Statement statement)
-        {
-            _context.Statements.Add(statement);
-            await _context.SaveChangesAsync();
+		// POST: api/Statement
+		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[HttpPost]
+		public async Task<ActionResult<Statement>> PostStatement(StatementDTO statement)
+		{
+			var examDiscipline = await _context.ExamDisciplines.FindAsync(new Guid(statement.ExamDisciplineId));
+			if (examDiscipline == null) return NotFound(new { message = "ExamDiscipline not found" });
 
-            return CreatedAtAction("GetStatement", new { id = statement.Id }, statement);
+			var existingStatement = await _context.Statements.FirstOrDefaultAsync(x => x.ExamDisciplineId == examDiscipline.Id);
+			if (existingStatement != null) return Conflict(new { message = "Statement already exists" });
+
+			var newStatement = new Statement
+			{
+				Id = Guid.NewGuid(),
+				ExamDisciplineId = examDiscipline.Id,
+				SessionYear = short.TryParse(statement.SessionYear, out var sessionYear) ? sessionYear : throw new Exception("Invalid sessionYear format"),
+				DateIssued = DateOnly.TryParse(statement.DateIssued, out var dateIssued) ? dateIssued : throw new Exception("Invalid dateIssued format"),
+				ExamDiscipline = examDiscipline
+			};
+
+			_context.Entry(examDiscipline).State = EntityState.Unchanged;
+
+			_context.Statements.Add(newStatement);
+			try
+			{
+				await _context.SaveChangesAsync();
+			}
+			catch (DbUpdateException ex)
+			{
+				if (ex.InnerException != null)
+				{
+					if (ex.InnerException.Message.Contains("Cannot insert duplicate key") ||
+						ex.InnerException.Message.Contains("23505: duplicate key value violates unique constraint"))
+					{
+						return Conflict(new { message = "Statement already exists" });
+					}
+				}
+				return Conflict(ex.Message);
+			}
+
+
+			return CreatedAtAction("GetStatement", new { id = newStatement.Id }, newStatement);
         }
 
         // DELETE: api/Statement/5

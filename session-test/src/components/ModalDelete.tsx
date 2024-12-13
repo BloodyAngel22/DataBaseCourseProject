@@ -4,20 +4,29 @@ import { MdDelete } from "react-icons/md";
 interface ModalDeleteProps {
 	title: string;
   content: string;
-  id: string;
-  handleDelete: (id: string) => void;
+	id?: string;
+	id2?: string;
+	handleDelete?: (id: string) => void;
+	handleDelete2?: (id1: string, id2: string) => void;
 }
 
 export default function ModalDelete({
 	title,
   content,
-  id,
-  handleDelete,
+	id,
+	id2,
+	handleDelete,
+	handleDelete2
 }: ModalDeleteProps) {
 	const { isOpen, onOpen, onOpenChange } = useDisclosure();
 	
 	const handleDeleteBtn = () => {
-		handleDelete(id);
+		if (handleDelete && id) {
+			handleDelete(id);
+		}
+		if (handleDelete2 && id && id2) {
+			handleDelete2(id, id2);
+		}
 		onOpenChange();
 	}
 

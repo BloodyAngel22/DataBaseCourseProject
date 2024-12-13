@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace backend.Models;
 
@@ -20,7 +21,9 @@ public partial class Lecturer
 
     public string DepartmentName { get; set; } = null!;
 
+	[JsonIgnore]
     public virtual Department DepartmentNameNavigation { get; set; } = null!;
 
+	[JsonIgnore]
     public virtual ICollection<ExamDiscipline> ExamDisciplines { get; set; } = new List<ExamDiscipline>();
 }

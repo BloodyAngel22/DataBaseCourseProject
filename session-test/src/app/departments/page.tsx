@@ -7,7 +7,6 @@ import {
   getDepartments,
 	updateDepartment,
 } from "@/api/departmentApi";
-import { DepartmentsPromise } from "@/types/DepartmentsPromise";
 import ModalDetail from "@/components/ModalDetail";
 import {
   Table,
@@ -31,6 +30,8 @@ import { TiArrowBackOutline } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import ModalUpdate from "@/components/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
+import DepartmentDTO from "@/types/Department/DepartmentDTO";
+import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<DepartmentsPromise>();
@@ -143,7 +144,7 @@ export default function DepartmentsPage() {
   const columns = [
     { key: "name", label: "Name" },
     { key: "actions", label: "Actions" },
-  ];
+	];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
@@ -183,7 +184,7 @@ export default function DepartmentsPage() {
           </ModalCreate>
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+				<div className="bg-white rounded-lg shadow overflow-hidden">
           <Table
             aria-label="Example table with custom cells"
             isStriped
@@ -207,9 +208,9 @@ export default function DepartmentsPage() {
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+									className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
                 >
-                  {column.label}
+									{column.label}
                 </TableColumn>
               )}
             </TableHeader>

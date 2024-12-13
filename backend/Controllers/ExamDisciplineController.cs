@@ -46,10 +46,9 @@ namespace backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutExamDiscipline(Guid id, ExamDiscipline examDiscipline)
         {
-            if (id != examDiscipline.Id)
-            {
-                return BadRequest();
-            }
+			var existingExamDiscipline = await _context.ExamDisciplines.FindAsync(id);
+
+			if (existingExamDiscipline == null) return NotFound(new { message = "ExamDiscipline not found" });
 
             _context.Entry(examDiscipline).State = EntityState.Modified;
 
@@ -72,15 +71,47 @@ namespace backend.Controllers
             return NoContent();
         }
 
+		public record ExamDisciplineDto(string DisciplineName, string EventDateTime, string LecturerId, string CabinetRoomName, string EventFormType);
+
         // POST: api/ExamDiscipline
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ExamDiscipline>> PostExamDiscipline(ExamDiscipline examDiscipline)
+        public async Task<ActionResult<ExamDiscipline>> PostExamDiscipline(ExamDisciplineDto examDiscipline)
         {
-            _context.ExamDisciplines.Add(examDiscipline);
-            await _context.SaveChangesAsync();
+			var discipline = await _context.Disciplines.FindAsync(examDiscipline.DisciplineName);
+			var lecturer = await _context.Lecturers.FindAsync(new Guid(examDiscipline.LecturerId));
+			var cabinetRoom = await _context.Cabinets.FindAsync(examDiscipline.CabinetRoomName);
+			var eventFormType = await _context.EventForms.FindAsync(examDiscipline.EventFormType);
 
-            return CreatedAtAction("GetExamDiscipline", new { id = examDiscipline.Id }, examDiscipline);
+			if (discipline == null) return NotFound(new { message = "Discipline not found" });
+			if (lecturer == null) return NotFound(new { message = "Lecturer not found" });
+			if (cabinetRoom == null) return NotFound(new { message = "CabinetRoom not found" });
+			if (eventFormType == null) return NotFound(new { message = "EventFormType not found" });
+
+            var newExamDiscipline = new ExamDiscipline
+            {
+				Id = Guid.NewGuid(),
+				DisciplineName = discipline.Name,
+				EventDatetime = DateTime.TryParse(examDiscipline.EventDateTime.ToString(), out var eventDateTime) ? eventDateTime : throw new Exception("Invalid eventDateTime format"),
+				LecturerId = lecturer.Id,
+				CabinetRoomName = cabinetRoom.RoomName,
+				EventFormType = eventFormType.Type
+            };
+			_context.ExamDisciplines.Add(newExamDiscipline);
+			try
+			{
+				await _context.SaveChangesAsync();
+			}
+			catch (Exception ex)
+			{
+				if (ex.InnerException != null)
+				{
+					return BadRequest(new { message = ex.InnerException.Message });
+				}
+				return BadRequest(new { message = ex.Message });
+			}
+
+            return CreatedAtAction("GetExamDiscipline", new { id = newExamDiscipline.Id}, newExamDiscipline);
         }
 
         // DELETE: api/ExamDiscipline/5

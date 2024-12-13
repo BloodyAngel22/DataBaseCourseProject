@@ -2,37 +2,62 @@ import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDi
 import { useEffect, useState } from "react";
 import { BiDetail } from "react-icons/bi";
 
-interface ModalDetailsProps<T extends { [key: string]: any}> {
+interface ModalDetailsProps<T extends { [key: string]: any }> {
 	id: string;
-	header: string;
-	fetchData: (id: string) => Promise<T>;
+	id2?: string;
+  header: string;
+	fetchData?: (id: string) => Promise<T>;
+	fetchData2?: (id1: string, id2: string) => Promise<T>;
 }
 
 export default function ModalDetail<T extends { [key: string]: any }>({
-  id,
+	id,
+	id2,
   header,
-  fetchData,
+	fetchData,
+	fetchData2
 }: ModalDetailsProps<T>) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [data, setData] = useState<T | null>(null);
 
   useEffect(() => {
-    const fetch = async () => {
-      const data = await fetchData(id);
-      setData(data);
+		const fetch = async () => {
+			if (fetchData) {
+				const data = await fetchData(id);
+				setData(data);
+			}
+			if (fetchData2 && id2) {
+				const data = await fetchData2(id, id2);
+				setData(data);
+			}
     };
     fetch();
-  }, [id, fetchData]);
+  }, [id, fetchData, fetchData2]);
 
   const renderDetails = (data: T) => {
+    const renderValue = (value: any): JSX.Element | string => {
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        return (
+          <ul className="pl-4">
+            {Object.entries(value).filter(([key]) => key !== "$id" && key !== "id" && !key.includes("Id")).map(([nestedKey, nestedValue]) => (
+              <li key={nestedKey}>
+                <span className="font-bold">{nestedKey}:</span> {renderValue(nestedValue)}
+              </li>
+            ))}
+          </ul>
+        );
+      }
+      return String(value);
+    };
+
     return (
       <ul>
         {Object.entries(data)
-          .filter(([key]) => key !== "$id" && key !== "id")
+          .filter(([key]) => key !== "$id" && key !== "id" && !key.includes("Id"))
           .map(([key, value]) => (
             <li key={key}>
               <div>
-                <span className="font-bold">{key}:</span> {String(value)}
+                <span className="font-bold">{key}:</span> {renderValue(value)}
               </div>
             </li>
           ))}
@@ -52,14 +77,14 @@ export default function ModalDetail<T extends { [key: string]: any }>({
           variant="shadow"
           startContent={<BiDetail className="text-lg" />}
         ></Button>
-			</Tooltip>
+      </Tooltip>
 
-			<Modal
-				isDismissable={false}
-				isKeyboardDismissDisabled={true}
+      <Modal
+        isDismissable={false}
+        isKeyboardDismissDisabled={true}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        scrollBehavior="inside"
+        scrollBehavior="outside"
       >
         <ModalContent>
           {(onClose) => (

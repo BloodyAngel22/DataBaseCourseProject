@@ -46,30 +46,22 @@ namespace backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutDiscipline(string id, Discipline discipline)
         {
-            if (id != discipline.Name)
-            {
-                return BadRequest();
-            }
+			var existingDiscipline = await _context.Disciplines.FindAsync(id);
 
-            _context.Entry(discipline).State = EntityState.Modified;
+			if (existingDiscipline == null) return NotFound(new { message = "Discipline not found" });
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!DisciplineExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+			var newName = discipline.Name;
 
-            return NoContent();
+			try
+			{
+				await _context.Database.ExecuteSqlInterpolatedAsync($"Update discipline set name = {newName} where name = {id}");
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
+
+			return NoContent();
         }
 
         // POST: api/Discipline

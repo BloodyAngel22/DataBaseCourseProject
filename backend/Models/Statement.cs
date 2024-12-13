@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace backend.Models;
 
@@ -18,5 +19,6 @@ public partial class Statement
 
     public virtual ExamDiscipline ExamDiscipline { get; set; } = null!;
 
+	[JsonIgnore]
     public virtual ICollection<Mark> Marks { get; set; } = new List<Mark>();
 }

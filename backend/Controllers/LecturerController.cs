@@ -46,15 +46,13 @@ namespace backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLecturer(Guid id, Lecturer lecturer)
         {
-            if (id != lecturer.Id)
-            {
-                return BadRequest();
-            }
+			var existingLecturer = await _context.Lecturers.FindAsync(id);
 
-            _context.Entry(lecturer).State = EntityState.Modified;
+			if (existingLecturer == null) return NotFound(new { message = "Lecturer not found" });
 
             try
             {
+				_context.Entry(lecturer).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -72,15 +70,51 @@ namespace backend.Controllers
             return NoContent();
         }
 
+		public record LecturerDTO(string firstname, string surname, string patronymic, string birthdate, string departmentName);
+
         // POST: api/Lecturer
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Lecturer>> PostLecturer(Lecturer lecturer)
+        public async Task<ActionResult<Lecturer>> PostLecturer(LecturerDTO lecturer)
         {
-            _context.Lecturers.Add(lecturer);
-            await _context.SaveChangesAsync();
+			var newLecturer = new Lecturer
+			{
+				Firstname = lecturer.firstname,
+				Surname = lecturer.surname,
+				Patronymic = lecturer.patronymic,
+				Birthdate = DateOnly.TryParse(lecturer.birthdate, out var birthdate) ? birthdate : throw new Exception("Invalid birthdate format"),
+				DepartmentName = lecturer.departmentName
+			};
 
-            return CreatedAtAction("GetLecturer", new { id = lecturer.Id }, lecturer);
+            _context.Lecturers.Add(newLecturer);
+			try
+			{
+				await _context.SaveChangesAsync();
+			}
+			catch (DbUpdateException)
+			{
+				if (LecturerExists(newLecturer.Id))
+				{
+					return Conflict(new { message = "Lecturer already exists" });
+				}
+				else
+				{
+					return Conflict(new { message = "Something went wrong" });
+				}
+			}
+			catch (Exception ex)
+			{
+				if (ex.InnerException != null)
+				{
+					if (ex.InnerException.Message.Contains("23505: duplicate key value"))
+					{
+						return Conflict(new { message = "Lecturer already exists" });
+					}
+				}
+				return Conflict(new { message = "Something went wrong" });
+			}
+
+            return CreatedAtAction("GetLecturer", new { id = newLecturer.Id }, newLecturer);
         }
 
         // DELETE: api/Lecturer/5

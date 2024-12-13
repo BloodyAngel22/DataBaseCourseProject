@@ -67,7 +67,7 @@ export default function ModalCreate<T>({
         isKeyboardDismissDisabled={true}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        scrollBehavior="inside"
+        scrollBehavior="outside"
       >
         <ModalContent>
           <>

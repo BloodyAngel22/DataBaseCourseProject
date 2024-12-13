@@ -24,14 +24,36 @@ namespace backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Mark>>> GetMarks()
         {
-            return await _context.Marks.ToListAsync();
+            return await _context.Marks.Include(x => x.Statement).Include(x => x.Student).Select(mark => new Mark()
+			{
+				Mark1 = mark.Mark1,
+				StatementId = mark.StatementId,
+				StudentId = mark.StudentId,
+				Statement = new Statement()
+				{
+					Id = mark.Statement.Id,
+					ExamDisciplineId = mark.Statement.ExamDisciplineId,
+					SessionYear = mark.Statement.SessionYear,
+					DateIssued = mark.Statement.DateIssued,
+				},
+				Student = new Student()
+				{
+					Id = mark.Student.Id,
+					Firstname = mark.Student.Firstname,
+					Surname = mark.Student.Surname,
+					Patronymic = mark.Student.Patronymic,
+					Course = mark.Student.Course,
+					Birthdate = mark.Student.Birthdate,
+					GroupName = mark.Student.GroupName
+				}
+			}).OrderByDescending(date => date.Statement.DateIssued).ToListAsync();
         }
 
-        // GET: api/Mark/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Mark>> GetMark(Guid id)
+        // GET: api/Mark/5/1
+        [HttpGet("{studentId}/{statementId}")]
+        public async Task<ActionResult<Mark>> GetMark(Guid studentId, Guid statementId)
         {
-            var mark = await _context.Marks.FindAsync(id);
+            var mark = await _context.Marks.Include(x => x.Statement).ThenInclude(x => x.ExamDiscipline).Include(x => x.Student).FirstOrDefaultAsync(x => x.StudentId == studentId && x.StatementId == statementId);
 
             if (mark == null)
             {
@@ -72,48 +94,79 @@ namespace backend.Controllers
             return NoContent();
         }
 
+		public record MarkDto(string Mark1, string StudentId, string StatementId);
+
         // POST: api/Mark
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Mark>> PostMark(Mark mark)
+        public async Task<ActionResult<Mark>> PostMark(MarkDto mark)
         {
-            _context.Marks.Add(mark);
+			var studentId = new Guid(mark.StudentId);
+			var statementId = new Guid(mark.StatementId);
+
+			var statement = await _context.Statements.FirstOrDefaultAsync(x => x.Id == statementId);
+			if (statement == null) return NotFound(new { message = "Statement not found" });
+
+			var student = await _context.Students.FirstOrDefaultAsync(x => x.Id == studentId);
+			if (student == null) return NotFound(new { message = "Student not found" });
+
+			var markExists = await _context.Marks.FirstOrDefaultAsync(x => x.StatementId == statementId && x.StudentId == studentId);
+			if (markExists != null) return Conflict(new { message = "Mark already exists" });
+
+			var newMark = new Mark()
+			{
+				Mark1 = mark.Mark1,
+				StatementId = statementId,
+				StudentId = studentId
+			};
+			_context.Marks.Add(newMark);
+
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                if (MarkExists(mark.StudentId))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
+				if (ex.InnerException != null)
+				{
+					return Conflict(ex.InnerException.Message);
+				}
+				return Conflict(ex.Message);
             }
 
-            return CreatedAtAction("GetMark", new { id = mark.StudentId }, mark);
+            return CreatedAtAction("GetMark", new { studentId, statementId }, newMark);
         }
 
-        // DELETE: api/Mark/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMark(Guid id)
-        {
-            var mark = await _context.Marks.FindAsync(id);
-            if (mark == null)
-            {
-                return NotFound();
-            }
+		// DELETE: api/Mark/5/7
+		[HttpDelete("{studentId}/{statementId}")]
+		public async Task<IActionResult> DeleteMark(Guid studentId, Guid statementId)
+		{
+			var mark = await _context.Marks
+				.FirstOrDefaultAsync(m => m.StudentId == studentId && m.StatementId == statementId);
+			if (mark == null)
+			{
+				return NotFound(new { message = "Mark not found" });
+			}
 
-            _context.Marks.Remove(mark);
-            await _context.SaveChangesAsync();
+			_context.Marks.Remove(mark);
+			try
+			{
+				await _context.SaveChangesAsync();
+			}
+			catch (DbUpdateException ex)
+			{
+				if (ex.InnerException != null)
+				{
+					return Conflict(ex.InnerException.Message);
+				}
+				return Conflict(ex.Message);
+			}
 
-            return NoContent();
-        }
+			return NoContent();
+		}
 
-        private bool MarkExists(Guid id)
+
+		private bool MarkExists(Guid id)
         {
             return _context.Marks.Any(e => e.StudentId == id);
         }

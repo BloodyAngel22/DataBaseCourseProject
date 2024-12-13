@@ -17,6 +17,8 @@ export default function FormInput({ register, errors, setValue, name, maxLength,
   return (
     <>
 			<Input
+				isRequired
+				isClearable
 				type={type}
         label={label ? label : name}
         errorMessage={errors[name]?.message}
@@ -28,11 +30,11 @@ export default function FormInput({ register, errors, setValue, name, maxLength,
 					},
 					min: {
 						value: min ? min : 0,
-						message: `${name} must be greater than 0`,
+						message: `${name} must be greater than ${min ? min : 0}`,
 					},
 					max: {
 						value: max ? max : 100,
-						message: `${name} must be less than 100`,
+						message: `${name} must be less than ${max ? max : 100}`,
 					},
         })}
 				value={setValue ? setValue(name) : undefined}

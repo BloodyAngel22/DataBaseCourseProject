@@ -23,7 +23,7 @@ export default async function Home() {
           name="Cabinets"
           icon={<SiGoogleclassroom />}
           description="Кабинеты университета"
-          href="/cabins"
+          href="/cabinets"
         />
         <CardTable
           name="Disciplines"
@@ -47,7 +47,7 @@ export default async function Home() {
           name="Students"
           icon={<PiStudent />}
           description="Студенты университета"
-          href="/student"
+          href="/students"
         />
         <CardTable
           name="Exams"

@@ -43,21 +43,23 @@ namespace backend.Controllers
             return student;
         }
 
+		public record StudentDto(Guid id, string firstName, string surname, string patronymic, int course, string birthDate, string groupName);
+
+		//TODO: Сделать обновление данных студента
         // PUT: api/Student/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutStudent(Guid id, Student student)
         {
-            if (id != student.Id)
-            {
-                return BadRequest();
-            }
+			var existingStudent = await _context.Students.FindAsync(id);
 
-            _context.Entry(student).State = EntityState.Modified;
+			if (existingStudent == null) return NotFound(new { message = "Student not found" });
+
 
             try
             {
-                await _context.SaveChangesAsync();
+				_context.Entry(student).State = EntityState.Modified;
+				await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -77,12 +79,23 @@ namespace backend.Controllers
         // POST: api/Student
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Student>> PostStudent(Student student)
+        public async Task<ActionResult<Student>> PostStudent(StudentDto student)
         {
-            _context.Students.Add(student);
+			var newStudent = new Student
+			{
+				Id = Guid.NewGuid(),
+				Firstname = student.firstName,
+				Surname = student.surname,
+				Patronymic = student.patronymic,
+				Course = short.TryParse(student.course.ToString(), out var course) ? course : throw new Exception("Invalid course format"),
+				Birthdate = DateOnly.TryParse(student.birthDate, out var birthdate) ? birthdate : throw new Exception("Invalid birthdate format"),
+				GroupName = student.groupName
+			};
+
+            _context.Students.Add(newStudent);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetStudent", new { id = student.Id }, student);
+            return CreatedAtAction("GetStudent", new { id = newStudent.Id }, student);
         }
 
         // DELETE: api/Student/5

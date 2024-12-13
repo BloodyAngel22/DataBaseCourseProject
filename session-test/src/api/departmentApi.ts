@@ -1,5 +1,6 @@
-import { DepartmentPromise } from "../types/DepartmentPromise";
-import { DepartmentsPromise } from "../types/DepartmentsPromise";
+import DepartmentDTO from "@/types/Department/DepartmentDTO";
+import DepartmentPromise from "@/types/Department/DepartmentPromise";
+import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 
 const url = process.env.NEXT_PUBLIC_API_URL + '/Department';
 

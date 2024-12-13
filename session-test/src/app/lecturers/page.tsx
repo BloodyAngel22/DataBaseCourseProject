@@ -1,0 +1,382 @@
+"use client";
+
+import {
+  getDepartments,
+} from "@/api/departmentApi";
+import ModalDetail from "@/components/ModalDetail";
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableCell,
+  TableRow,
+  getKeyValue,
+  Button,
+  Pagination,
+	Tooltip,
+} from "@nextui-org/react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import ModalCreate from "@/components/ModalCreate";
+import { useForm } from "react-hook-form";
+import FormInput from "@/components/FormInput";
+import ModalDelete from "@/components/ModalDelete";
+import { TiArrowBackOutline } from "react-icons/ti";
+import LoadingSection from "@/components/LoadingSection";
+import ModalUpdate from "@/components/ModalUpdate";
+import { FiEdit3 } from "react-icons/fi";
+import { createGroup, deleteGroup, getGroup, getGroups, updateGroup } from "@/api/groupApi";
+import FormSelect from "@/components/FormSelect";
+import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
+import GroupDTO from "@/types/Group/GroupDTO";
+import GroupsPromise from "@/types/Group/GroupsPromise";
+import LecturersPromise from "@/types/Lecturer/LecturersPromise";
+import LecturerDTO from "@/types/Lecturer/LecturerDTO";
+import { createLecturer, deleteLecturer, getLecturer, getLecturers, updateLecturer } from "@/api/lecturerApi";
+import FormDateOnly from "@/components/FormDateOnly";
+
+let cachedDepartments: string[] | null = null;
+
+//FIXME: Сделать возможность изменения даты рождения лектора
+export default function LecturersPage() {
+  const [lecturers, setLecturers] = useState<LecturersPromise>();
+  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 5;
+  let pages = 0;
+  const items = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return lecturers?.$values.slice(start, end);
+  }, [lecturers, page]);
+
+  const [selectedItem, setSelectedItem] = useState<LecturerDTO | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (item: LecturerDTO) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const {
+    register: registerCreate,
+    handleSubmit: handleSubmitCreate,
+		reset: resetCreate,
+		watch: watchCreate,
+		setValue: setValueCreate,
+    formState: { errors: errorsCreate },
+  } = useForm<LecturerDTO>({ mode: "onChange", defaultValues: { firstname: "", surname: "", patronymic: "", birthdate: "", departmentName: "" } });
+
+  const {
+    register: registerUpdate,
+    handleSubmit: handleSubmitUpdate,
+		reset: resetUpdate,
+		watch: watchUpdate,
+    setValue: setValueUpdate,
+    formState: { errors: errorsUpdate },
+  } = useForm<LecturerDTO>({ mode: "onChange", defaultValues: { firstname: "", surname: "", patronymic: "", birthdate: "", departmentName: "" } });
+
+  const [id, setId] = useState("");
+
+  if (lecturers) {
+    pages = Math.ceil(lecturers.$values.length / rowsPerPage);
+  }
+
+	const handleSubmitBtn = handleSubmitCreate(async (data) => {
+		console.log("create", data);
+    try {
+      const response = await createLecturer(data);
+      console.log(response);
+      if (response.success === true) {
+        const data = await getLecturers();
+        setLecturers(data);
+        resetCreate();
+        setIsCreatedSuccess(true);
+      } else {
+        alert(response.message);
+      }
+    } catch (error) {
+      alert((error as Error).message);
+    }
+  });
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await deleteLecturer(id);
+      console.log(response);
+      if (response.success === true) {
+        const data = await getLecturers();
+        setLecturers(data);
+      } else {
+        alert(response.message);
+      }
+    } catch (error) {
+      alert((error as Error).message);
+    }
+  };
+
+	const handleUpdate = handleSubmitUpdate(async (data: LecturerDTO) => {
+		console.log("update", id, data);
+
+    // try {
+    //   const response = await updateLecturer(id, data);
+    //   console.log(response);
+    //   if (response.success === true) {
+    //     const data = await getLecturers();
+		// 		setLecturers(data);
+		// 		setIsModalOpen(false);
+		// 		setSelectedItem(null);
+    //   } else {
+    //     alert(response.message);
+    //   }
+    // } catch (error) {
+    //   alert((error as Error).message);
+    // }
+  });
+
+  useEffect(() => {
+    const fetchLecturers = async () => {
+      const data = await getLecturers();
+      setLecturers(data);
+    };
+		fetchLecturers();
+  }, [setLecturers]);
+
+  if (!lecturers) {
+    return <LoadingSection />;
+  }
+
+	const columns = [
+		{ key: "surname", label: "Last Name" },
+		{ key: "firstname", label: "First Name" },
+		{ key: "patronymic", label: "Patronymic" },
+		{ key: "birthdate", label: "Birthdate" },
+    { key: "departmentName", label: "Department" },
+    { key: "actions", label: "Actions" },
+	];
+
+	
+	const getDepartmentsData = async (): Promise<string[]> => {
+		if (cachedDepartments) {
+			return cachedDepartments;
+		}
+
+		const departments: string[] = [];
+		const response: DepartmentsPromise = await getDepartments();
+		for (const department of response.$values) {
+			departments.push(department.name);
+		}
+		cachedDepartments = departments;
+		return departments;
+	}
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
+      <div className="container mx-auto">
+				<h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
+					Lecturers
+        </h1>
+
+        <div className="flex justify-between items-center mb-6">
+          <Button
+            as={Link}
+            href="/"
+            color="primary"
+            size="sm"
+            startContent={<TiArrowBackOutline />}
+            className="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-md shadow-lg transition-transform transform hover:scale-105"
+          >
+            Go to home
+          </Button>
+          <ModalCreate
+            reset={resetCreate}
+            name="lecturer"
+            onSubmit={handleSubmitBtn}
+            loading={false}
+            error={null}
+            setIsCreatedSuccess={setIsCreatedSuccess}
+            isCreatedSuccess={isCreatedSuccess}
+          >
+            <FormInput
+              name="firstname"
+              register={registerCreate}
+              errors={errorsCreate}
+              maxLength={100}
+              type="text"
+              label="First Name"
+						/>
+						<FormInput
+							name="surname"
+							register={registerCreate}
+							errors={errorsCreate}
+							maxLength={100}
+							type="text"
+							label="Last Name"
+						/>
+						<FormInput
+							name="patronymic"
+							register={registerCreate}
+							errors={errorsCreate}
+							maxLength={100}
+							type="text"
+							label="Patronymic"
+						/>
+						<FormDateOnly
+							name="birthdate"
+							label="Birthdate"
+							register={registerCreate}
+							errors={errorsCreate}
+							watch={watchCreate}
+							setValue={setValueCreate}
+						/>
+						<FormSelect
+							label="Department"
+							data={getDepartmentsData()}
+							name="departmentName"
+							register={registerCreate}
+							errors={errorsCreate}
+						/>
+          </ModalCreate>
+        </div>
+
+				<div className="bg-white rounded-lg shadow overflow-hidden">
+          <Table
+            aria-label="Example table with custom cells"
+            isStriped
+            className="text-black table-auto w-full border-collapse rounded-lg overflow-hidden"
+            bottomContent={
+              <div className="flex justify-between items-center p-4 bg-gray-100">
+                <Pagination
+                  isCompact
+                  showControls
+                  showShadow
+                  color="primary"
+                  page={page}
+                  total={pages}
+                  onChange={(page) => setPage(page)}
+                  className="bg-gray-200 p-2 rounded-lg shadow-sm"
+                />
+              </div>
+            }
+          >
+            <TableHeader columns={columns}>
+              {(column) => (
+                <TableColumn
+                  key={column.key}
+                  className="font-bold text-indigo-600 bg-gray-50 py-4 px-2 border-b border-gray-200"
+                >
+                  {column.label}
+                </TableColumn>
+              )}
+            </TableHeader>
+            <TableBody items={items}>
+              {(item) => (
+                <TableRow key={item.id}>
+                  {(columnKey) =>
+                    columnKey === "actions" ? (
+                      <TableCell className="flex gap-4">
+                        <ModalDetail
+                          id={item.id}
+                          header="Lecturer details"
+                          fetchData={getLecturer}
+												/>
+												<Tooltip content="Update details">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          color="secondary"
+													onPress={() => { openModal(item); setId(item.id); }}
+                          variant="shadow"
+                          className="scale-85"
+                          startContent={<FiEdit3 className="text-lg" />}
+													/>
+												</Tooltip>
+
+                        <ModalDelete
+                          title="Delete lecturer"
+                          content="Delete lecturer"
+                          id={item.id}
+                          handleDelete={handleDelete}
+                        />
+                      </TableCell>
+                    ) : (
+                      <TableCell className="py-3 px-2">
+                        {getKeyValue(item, columnKey)}
+                      </TableCell>
+                    )
+                  }
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+
+          <ModalUpdate
+            name="lecturer"
+            reset={resetUpdate}
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              resetUpdate();
+            }}
+						onSubmit={handleUpdate}
+						isUpdatedSuccess={isCreatedSuccess}
+						setIsUpdatedSuccess={setIsCreatedSuccess}
+          >
+            <FormInput
+              name="firstname"
+              register={registerUpdate}
+              errors={errorsUpdate}
+              maxLength={100}
+							type="text"
+							label="First Name"
+              setValue={() => {
+                setValueUpdate("firstname", selectedItem?.firstname || "");
+              }}
+						/>
+						<FormInput
+							name="surname"
+							register={registerUpdate}
+							errors={errorsUpdate}
+							maxLength={100}
+							type="text"
+							label="Last Name"
+							setValue={() => {
+								setValueUpdate("surname", selectedItem?.surname || "");
+							}}
+						/>
+						<FormInput
+							name="patronymic"
+							register={registerUpdate}
+							errors={errorsUpdate}
+							maxLength={100}
+							type="text"
+							label="Patronymic"
+							setValue={() => {
+								setValueUpdate("patronymic", selectedItem?.patronymic || "");
+							}}
+						/>
+						<FormDateOnly
+							name="birthdate"
+							label="Birthdate"
+							register={registerUpdate}
+							errors={errorsUpdate}
+							watch={watchUpdate}
+							setValue={() => setValueUpdate("birthdate", selectedItem?.birthdate || "")}
+							value={selectedItem?.birthdate}
+						/>
+						<FormSelect
+							label="Department"
+							data={getDepartmentsData()}
+							name="departmentName"
+							register={registerUpdate}
+							errors={errorsUpdate}
+							defaultSelectedValue={selectedItem?.departmentName}
+							setValue={() => setValueUpdate("departmentName", selectedItem?.departmentName || "ww")}
+						/>
+          </ModalUpdate>
+        </div>
+      </div>
+    </div>
+  );
+}
