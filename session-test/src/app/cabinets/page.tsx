@@ -1,6 +1,6 @@
 "use client";
 
-import ModalDetail from "@/components/ModalDetail";
+import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
   TableHeader,
@@ -16,13 +16,13 @@ import {
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/ModalCreate";
+import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/FormInput";
-import ModalDelete from "@/components/ModalDelete";
+import FormInput from "@/components/Form/FormInput";
+import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/ModalUpdate";
+import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
 import { createCabinet, deleteCabinet, getCabinet, getCabinets, updateCabinet } from "@/api/cabinetApi";
 import CabinetDTO from "@/types/Cabinet/CabinetDTO";
@@ -206,7 +206,8 @@ export default function CabinetsPage() {
               errors={errorsCreate}
               maxLength={100}
               type="text"
-              label="Name"
+							label="Name"
+							required
             />
           </ModalCreate>
         </div>
@@ -311,6 +312,7 @@ export default function CabinetsPage() {
               setValue={() => {
                 setValueUpdate("roomName", selectedItem?.roomName || "");
               }}
+							required
             />
           </ModalUpdate>
         </div>

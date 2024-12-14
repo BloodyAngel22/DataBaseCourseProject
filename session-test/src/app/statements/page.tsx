@@ -1,6 +1,6 @@
 "use client";
 
-import ModalDetail from "@/components/ModalDetail";
+import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
   TableHeader,
@@ -15,22 +15,25 @@ import {
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/ModalCreate";
+import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/FormInput";
-import ModalDelete from "@/components/ModalDelete";
+import FormInput from "@/components/Form/FormInput";
+import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/ModalUpdate";
+import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
-import FormSelect from "@/components/FormSelect";
-import FormDateOnly from "@/components/FormDateOnly";
+import FormSelect from "@/components/Form/FormSelect";
+import FormDateOnly from "@/components/Form/FormDateOnly";
 import StatementsPromise from "@/types/Statement/StatementsPromise";
 import StatementDTO from "@/types/Statement/StatementDTO";
-import { createStatement, deleteStatement, getStatement, getStatements } from "@/api/statementApi";
+import { createStatement, deleteStatement, getFilteredStatements, getStatement, getStatements } from "@/api/statementApi";
 import ExamDisciplinesPromise from "@/types/ExamDiscipline/ExamDisciplinesPromise";
 import { getExamDisciplines } from "@/api/examDisciplineApi";
 import sortData from "@/functions/sortData";
+import StatementFilter from "@/types/Statement/StatementFilter";
+import FilterSection from "@/components/FilterSection";
+import FormDateTime from "@/components/Form/FormDateTime";
 
 let cachedExamDisciplines: string[] | null = null;
 
@@ -106,7 +109,16 @@ export default function StatementsPage() {
 		watch: watchUpdate,
     setValue: setValueUpdate,
     formState: { errors: errorsUpdate },
-  } = useForm<StatementDTO>({ mode: "onChange", defaultValues: { examDisciplineId: "", sessionYear: 0, dateIssued: "" } });
+	} = useForm<StatementDTO>({ mode: "onChange", defaultValues: { examDisciplineId: "", sessionYear: 0, dateIssued: "" } });
+	
+	const {
+		register: registerFilter,
+		handleSubmit: handleSubmitFilter,
+		reset: resetFilter,
+		watch: watchFilter,
+		setValue: setValueFilter,
+		formState: { errors: errorsFilter },
+	} = useForm<StatementFilter>({ mode: "onChange", defaultValues: { eventDatetimeStart: "", eventDatetimeEnd: "", sessionYear: "", dateIssuedStart: "", dateIssuedEnd: "" } });
 
   const [id, setId] = useState("");
 
@@ -239,7 +251,28 @@ export default function StatementsPage() {
 			setSortColumn(key);
 			setSortDirection("asc");
 		}
-	};
+			};
+	
+	const handleFilter = handleSubmitFilter(async (data: StatementFilter) => {
+		console.log("filter", data);
+		try {
+			const response = await getFilteredStatements(data);
+			setStatements(response);
+		} catch (error) {
+			alert((error as Error).message);
+		}
+	})
+
+	const resetFilterBtn = async () => {
+		resetFilter();
+
+		try {
+			const response = await getStatements();
+			setStatements(response);
+		} catch (error) {
+			alert((error as Error).message);
+		}
+	}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
@@ -259,41 +292,98 @@ export default function StatementsPage() {
           >
             Go to home
           </Button>
-          <ModalCreate
-            reset={resetCreate}
-            name="statement"
-            onSubmit={handleSubmitBtn}
-            loading={false}
-            error={null}
-            setIsCreatedSuccess={setIsCreatedSuccess}
-            isCreatedSuccess={isCreatedSuccess}
-          >
-            <FormSelect
-              label="Exam Discipline"
-              data={getExamDisciplinesData()}
-              name="examDisciplineId"
-              register={registerCreate}
-              errors={errorsCreate}
-            />
-            <FormInput
-              name="sessionYear"
-              register={registerCreate}
-              errors={errorsCreate}
-              label="Session Year"
-              type="number"
-              min={1900}
-              max={2100}
-            />
-            <FormDateOnly
-              name="dateIssued"
-              label="Date Issued"
-              register={registerCreate}
-              errors={errorsCreate}
-              watch={watchCreate}
-              setValue={setValueCreate}
-              maxDate={new Date("2100-01-01")}
-            />
-          </ModalCreate>
+
+					<div className="flex gap-2">
+						<FilterSection
+							onSubmit={handleFilter}
+							resetFilter={resetFilterBtn}
+						>
+							<FormInput
+								name="sessionYear"
+								register={registerFilter}
+								errors={errorsFilter}
+								label="Session Year"
+								type="number"
+								min={1900}
+								max={2030}
+							/>
+							<FormDateTime
+								name="eventDatetimeStart"
+								register={registerFilter}
+								errors={errorsFilter}
+								label="Event Date Time Start"
+								setValue={setValueFilter}
+								watch={watchFilter}
+								maxDate={new Date("2030-01-01")}
+							/>
+							<FormDateTime
+								name="eventDatetimeEnd"
+								register={registerFilter}
+								errors={errorsFilter}
+								label="Event Date Time End"
+								setValue={setValueFilter}
+								watch={watchFilter}
+								maxDate={new Date("2030-01-01")}
+							/>
+							<FormDateOnly
+								name="dateIssuedStart"
+								label="Date Issued Start"
+								register={registerFilter}
+								errors={errorsFilter}
+								setValue={setValueFilter}
+								watch={watchFilter}
+								maxDate={new Date("2030-01-01")}
+							/>
+							<FormDateOnly
+								name="dateIssuedEnd"
+								label="Date Issued End"
+								register={registerFilter}
+								errors={errorsFilter}
+								setValue={setValueFilter}
+								watch={watchFilter}
+								maxDate={new Date("2030-01-01")}
+							/>
+						</FilterSection>
+
+            <ModalCreate
+              reset={resetCreate}
+              name="statement"
+              onSubmit={handleSubmitBtn}
+              loading={false}
+              error={null}
+              setIsCreatedSuccess={setIsCreatedSuccess}
+              isCreatedSuccess={isCreatedSuccess}
+            >
+              <FormSelect
+                label="Exam Discipline"
+                data={getExamDisciplinesData()}
+                name="examDisciplineId"
+                register={registerCreate}
+                errors={errorsCreate}
+                required
+              />
+              <FormInput
+                name="sessionYear"
+                register={registerCreate}
+                errors={errorsCreate}
+                label="Session Year"
+                type="number"
+                min={1900}
+                max={2100}
+                required
+              />
+              <FormDateOnly
+                name="dateIssued"
+                label="Date Issued"
+                register={registerCreate}
+                errors={errorsCreate}
+                watch={watchCreate}
+                setValue={setValueCreate}
+                maxDate={new Date("2100-01-01")}
+                required
+              />
+            </ModalCreate>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -414,6 +504,7 @@ export default function StatementsPage() {
                   selectedItem?.examDisciplineId || ""
                 )
               }
+              required
             />
             <FormInput
               name="sessionYear"
@@ -426,6 +517,7 @@ export default function StatementsPage() {
               setValue={() =>
                 setValueUpdate("sessionYear", selectedItem?.sessionYear || 0)
               }
+              required
             />
             <FormDateOnly
               name="dateIssued"
@@ -437,6 +529,7 @@ export default function StatementsPage() {
                 setValueUpdate("dateIssued", selectedItem?.dateIssued || "")
               }
               value={selectedItem?.dateIssued}
+              required
             />
           </ModalUpdate>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import ModalDetail from "@/components/ModalDetail";
+import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
   TableHeader,
@@ -16,22 +16,24 @@ import {
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/ModalCreate";
+import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/FormInput";
-import ModalDelete from "@/components/ModalDelete";
+import FormInput from "@/components/Form/FormInput";
+import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/ModalUpdate";
+import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
 import { getGroups } from "@/api/groupApi";
-import FormSelect from "@/components/FormSelect";
+import FormSelect from "@/components/Form/FormSelect";
 import GroupsPromise from "@/types/Group/GroupsPromise";
-import FormDateOnly from "@/components/FormDateOnly";
+import FormDateOnly from "@/components/Form/FormDateOnly";
 import StudentsPromise from "@/types/Student/StudentsPromise";
 import StudentDTO from "@/types/Student/StudentDTO";
-import { createStudent, deleteStudent, getStudent, getStudents } from "@/api/studentApi";
+import { createStudent, deleteStudent, getFilteredStudents, getStudent, getStudents } from "@/api/studentApi";
 import sortData from "@/functions/sortData";
+import FilterSection from "@/components/FilterSection";
+import StudentFilter from "@/types/Student/StudentFilter";
 
 let cachedGroups: string[] | null = null;
 
@@ -107,7 +109,16 @@ export default function StudentsPage() {
 		watch: watchUpdate,
     setValue: setValueUpdate,
     formState: { errors: errorsUpdate },
-  } = useForm<StudentDTO>({ mode: "onChange", defaultValues: { firstname: "", surname: "", patronymic: "", birthdate: "", groupName: "" } });
+	} = useForm<StudentDTO>({ mode: "onChange", defaultValues: { firstname: "", surname: "", patronymic: "", birthdate: "", groupName: "" } });
+	
+	const {
+		register: registerFilter,
+		handleSubmit: handleSubmitFilter,
+		reset: resetFilter,
+		watch: watchFilter,
+		setValue: setValueFilter,
+		formState: { errors: errorsFilter },
+	} = useForm<StudentFilter>({ mode: "onChange", defaultValues: { course: "", groupName: "", dateStart: "", dateEnd: "" } });
 
   const [id, setId] = useState("");
 
@@ -210,7 +221,43 @@ export default function StudentsPage() {
 			setSortColumn(key);
 			setSortDirection("asc");
 		}
-	};
+			};
+	
+	const filterSubmit = handleSubmitFilter(async (data: StudentFilter) => {
+		if (!dateValidation(data.dateStart ?? "", data.dateEnd ?? "")) {
+			alert("Invalid date range");
+			return;
+		}
+		console.log("filter", data);
+
+		try {
+			const response = await getFilteredStudents(data);
+			console.log(response);
+			setStudents(response);
+		} catch (error) {
+			alert((error as Error).message);
+		}
+	})
+
+	const resetFilterBtn = async () => {
+		resetFilter();
+
+		try {
+			const response = await getStudents();
+			setStudents(response);
+		} catch (error) {
+			alert((error as Error).message);
+		}
+	}
+
+	const dateValidation = (date1: string, date2: string) => {
+		const d1 = new Date(date1);
+		const d2 = new Date(date2);
+		if (d1 > d2) {
+			return false;
+		}
+		return true;
+	}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
@@ -230,64 +277,107 @@ export default function StudentsPage() {
           >
             Go to home
           </Button>
-          <ModalCreate
-            reset={resetCreate}
-            name="student"
-            onSubmit={handleSubmitBtn}
-            loading={false}
-            error={null}
-            setIsCreatedSuccess={setIsCreatedSuccess}
-            isCreatedSuccess={isCreatedSuccess}
-          >
-            <FormInput
-              name="firstname"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-              label="First Name"
-            />
-            <FormInput
-              name="surname"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-              label="Last Name"
-            />
-            <FormInput
-              name="patronymic"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-              label="Patronymic"
-            />
-            <FormInput
-              name="course"
-              register={registerCreate}
-              errors={errorsCreate}
-              type="number"
-              label="Course"
-              min={1}
-              max={5}
-            />
-            <FormDateOnly
-              name="birthdate"
-              label="Birthdate"
-              register={registerCreate}
-              errors={errorsCreate}
-              watch={watchCreate}
-              setValue={setValueCreate}
-            />
-            <FormSelect
-              label="Group"
-              data={getGroupsData()}
-              name="groupName"
-              register={registerCreate}
-              errors={errorsCreate}
-            />
-          </ModalCreate>
+          <div className="flex gap-2">
+						<FilterSection onSubmit={filterSubmit} resetFilter={resetFilterBtn}>
+							<FormInput
+								name="course"
+								label="Course"
+								type="number"
+								min={1}
+								max={5}
+								register={registerFilter}
+								errors={errorsFilter}
+							/>
+							<FormSelect
+								name="groupName"
+								label="Group"
+								data={getGroupsData()}
+								register={registerFilter}
+								errors={errorsFilter}
+							/>
+							<FormDateOnly
+								name="dateStart"
+								label="Date Start"
+								register={registerFilter}
+								errors={errorsFilter}
+								watch={watchFilter}
+								setValue={setValueFilter}
+							/>
+							<FormDateOnly
+								name="dateEnd"
+								label="Date End"
+								register={registerFilter}
+								errors={errorsFilter}
+								watch={watchFilter}
+								setValue={setValueFilter}
+							/>
+						</FilterSection>
+
+            <ModalCreate
+              reset={resetCreate}
+              name="student"
+              onSubmit={handleSubmitBtn}
+              loading={false}
+              error={null}
+              setIsCreatedSuccess={setIsCreatedSuccess}
+              isCreatedSuccess={isCreatedSuccess}
+            >
+              <FormInput
+                name="firstname"
+                register={registerCreate}
+                errors={errorsCreate}
+                maxLength={100}
+                type="text"
+                label="First Name"
+							required
+              />
+              <FormInput
+                name="surname"
+                register={registerCreate}
+                errors={errorsCreate}
+                maxLength={100}
+                type="text"
+                label="Last Name"
+							required
+              />
+              <FormInput
+                name="patronymic"
+                register={registerCreate}
+                errors={errorsCreate}
+                maxLength={100}
+                type="text"
+                label="Patronymic"
+							required
+              />
+              <FormInput
+                name="course"
+                register={registerCreate}
+                errors={errorsCreate}
+                type="number"
+                label="Course"
+                min={1}
+                max={5}
+							required
+              />
+              <FormDateOnly
+                name="birthdate"
+                label="Birthdate"
+                register={registerCreate}
+                errors={errorsCreate}
+                watch={watchCreate}
+                setValue={setValueCreate}
+                required
+              />
+              <FormSelect
+                label="Group"
+                data={getGroupsData()}
+                name="groupName"
+                register={registerCreate}
+                errors={errorsCreate}
+							required
+              />
+            </ModalCreate>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -404,6 +494,7 @@ export default function StudentsPage() {
               setValue={() => {
                 setValueUpdate("firstname", selectedItem?.firstname || "");
               }}
+                required
             />
             <FormInput
               name="surname"
@@ -415,6 +506,7 @@ export default function StudentsPage() {
               setValue={() => {
                 setValueUpdate("surname", selectedItem?.surname || "");
               }}
+                required
             />
             <FormInput
               name="patronymic"
@@ -426,6 +518,7 @@ export default function StudentsPage() {
               setValue={() => {
                 setValueUpdate("patronymic", selectedItem?.patronymic || "");
               }}
+                required
             />
             <FormInput
               name="course"
@@ -438,6 +531,7 @@ export default function StudentsPage() {
               setValue={() => {
                 setValueUpdate("course", selectedItem?.course || 0);
               }}
+                required
             />
             <FormDateOnly
               name="birthdate"
@@ -449,6 +543,7 @@ export default function StudentsPage() {
                 setValueUpdate("birthdate", selectedItem?.birthdate || "")
               }
               value={selectedItem?.birthdate}
+                required
             />
             <FormSelect
               label="Group"
@@ -460,6 +555,7 @@ export default function StudentsPage() {
               setValue={() =>
                 setValueUpdate("groupName", selectedItem?.groupName || "ww")
               }
+                required
             />
           </ModalUpdate>
         </div>

@@ -11,7 +11,7 @@ import {
 } from "@nextui-org/react";
 import { useEffect } from "react";
 import { FiEdit3 } from "react-icons/fi";
-import FormInput from "./FormInput";
+import FormInput from "./Form/FormInput";
 import { UseFormRegister } from "react-hook-form";
 
 interface ModalUpdateProps {

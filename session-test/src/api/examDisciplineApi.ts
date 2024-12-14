@@ -1,4 +1,5 @@
 import ExamDisciplineDTO from "@/types/ExamDiscipline/ExamDisciplineDTO";
+import ExamDisciplineFilter from "@/types/ExamDiscipline/ExamDisciplineFilter";
 import ExamDisciplinePromise from "@/types/ExamDiscipline/ExamDisciplinePromise";
 import ExamDisciplinesPromise from "@/types/ExamDiscipline/ExamDisciplinesPromise";
 
@@ -11,6 +12,23 @@ export async function getExamDisciplines(): Promise<ExamDisciplinesPromise> {
 		next: {
 			revalidate: 5 // revalidate every 5 seconds
 		}
+	});
+	const data = await res.json();
+	return data;
+}
+
+export async function getFilteredExamDisciplines(filter: ExamDisciplineFilter): Promise<ExamDisciplinesPromise> {
+	const queryString = new URLSearchParams(filter as Record<string, string>).toString();
+	const url = `${process.env.NEXT_PUBLIC_API_URL}/ExamDiscipline?${queryString}`;
+	console.log(url);
+	const res = await fetch(url, {
+		method: 'GET',
+		next: {
+			revalidate: 5 // revalidate every 5 seconds
+		},
+		headers: {
+			'Content-Type': 'application/json'
+		},
 	});
 	const data = await res.json();
 	return data;

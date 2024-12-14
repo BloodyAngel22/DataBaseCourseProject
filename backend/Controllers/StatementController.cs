@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using backend.Filters;
+using backend.Extensions;
 
 namespace backend.Controllers
 {
@@ -22,7 +24,7 @@ namespace backend.Controllers
 
         // GET: api/Statement
 		[HttpGet]
-		public async Task<ActionResult<IEnumerable<Statement>>> GetStatements()
+		public async Task<ActionResult<IEnumerable<Statement>>> GetStatements([FromQuery] StatementFilter filter)
 		{
 			var statements = await _context.Statements
 				.Include(x => x.ExamDiscipline)
@@ -42,6 +44,7 @@ namespace backend.Controllers
 						EventFormType = statement.ExamDiscipline.EventFormType
 					}
 				})
+				.Filter(filter)
 				.ToListAsync();
 
 			return statements;

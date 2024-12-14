@@ -1,6 +1,6 @@
 "use client";
 
-import ModalDetail from "@/components/ModalDetail";
+import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
   TableHeader,
@@ -16,21 +16,21 @@ import {
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/ModalCreate";
+import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/FormInput";
-import ModalDelete from "@/components/ModalDelete";
+import FormInput from "@/components/Form/FormInput";
+import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/ModalUpdate";
+import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
-import FormSelect from "@/components/FormSelect";
+import FormSelect from "@/components/Form/FormSelect";
 import LecturersPromise from "@/types/Lecturer/LecturersPromise";
 import { getLecturers } from "@/api/lecturerApi";
 import ExamDisciplinesPromise from "@/types/ExamDiscipline/ExamDisciplinesPromise";
 import ExamDisciplineDTO from "@/types/ExamDiscipline/ExamDisciplineDTO";
-import { createExamDiscipline, deleteExamDiscipline, getExamDiscipline, getExamDisciplines } from "@/api/examDisciplineApi";
-import FormDateTime from "@/components/FormDateTime";
+import { createExamDiscipline, deleteExamDiscipline, getExamDiscipline, getExamDisciplines, getFilteredExamDisciplines } from "@/api/examDisciplineApi";
+import FormDateTime from "@/components/Form/FormDateTime";
 import CabinetsPromise from "@/types/Cabinet/CabinetsPromise";
 import { getCabinets } from "@/api/cabinetApi";
 import EventFormTypesPromise from "@/types/EventFormType/EventFormTypesPromise";
@@ -38,6 +38,8 @@ import { getEventFormTypes } from "@/api/EventFormTypeApi";
 import DisciplinesPromise from "@/types/Discipline/DisciplinesPromise";
 import { getDisciplines } from "@/api/disciplineApi";
 import sortData from "@/functions/sortData";
+import ExamDisciplineFilter from "@/types/ExamDiscipline/ExamDisciplineFilter";
+import FilterSection from "@/components/FilterSection";
 
 let cachedDisciplines: string[] | null = null;
 let cachedLecturers: string[] | null = null;
@@ -116,7 +118,16 @@ const filteredExams = useMemo(() => {
 		watch: watchUpdate,
     setValue: setValueUpdate,
     formState: { errors: errorsUpdate },
-  } = useForm<ExamDisciplineDTO>({ mode: "onChange", defaultValues: { disciplineName: "", eventDatetime: "", lecturerId: "", cabinetRoomName: "", eventFormType: "" } });
+	} = useForm<ExamDisciplineDTO>({ mode: "onChange", defaultValues: { disciplineName: "", eventDatetime: "", lecturerId: "", cabinetRoomName: "", eventFormType: "" } });
+	
+	const {
+		register: registerFilter,
+		handleSubmit: handleSubmitFilter,
+		reset: resetFilter,
+		watch: watchFilter,
+		setValue: setValueFilter,
+		formState: { errors: errorsFilter },
+	} = useForm<ExamDisciplineFilter>({ mode: "onChange", defaultValues: { dateStart: "", dateEnd: "", examType: "" } })
 
   const [id, setId] = useState("");
 
@@ -308,6 +319,34 @@ const filteredExams = useMemo(() => {
 		}
 	};
 
+	const onSubmitFilter = handleSubmitFilter(async (data) => {
+		console.log(data);
+
+		try {
+			const response = await getFilteredExamDisciplines(data);
+			setExams(response);
+			response?.$values.forEach((item) => {
+				item.lecturer.fio = `${item.lecturer.surname} ${item.lecturer.firstname} ${item.lecturer.patronymic}`;
+			})
+		} catch (error) {
+			alert((error as Error).message);
+		}
+	});
+
+	const resetFilterBtn = async () => {
+		resetFilter();
+
+		try {
+			const data = await getExamDisciplines();
+			data?.$values.forEach((item) => {
+				item.lecturer.fio = `${item.lecturer.surname} ${item.lecturer.firstname} ${item.lecturer.patronymic}`;
+			})
+			setExams(data);
+		} catch (error) {
+			alert((error as Error).message);
+		}
+	}
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
       <div className="container mx-auto">
@@ -326,53 +365,92 @@ const filteredExams = useMemo(() => {
           >
             Go to home
           </Button>
-          <ModalCreate
-            reset={resetCreate}
-            name="exam"
-            onSubmit={handleSubmitBtn}
-            loading={false}
-            error={null}
-            setIsCreatedSuccess={setIsCreatedSuccess}
-            isCreatedSuccess={isCreatedSuccess}
-          >
-            <FormSelect
-              label="Discipline"
-              data={getDisciplinesData()}
-              name="disciplineName"
-              register={registerCreate}
-              errors={errorsCreate}
-            />
-            <FormDateTime
-              name="eventDateTime"
-              register={registerCreate}
-              errors={errorsCreate}
-              watch={watchCreate}
-              setValue={setValueCreate}
-              maxDate={new Date("2030-01-01")}
-              label="Event date and time"
-            />
-            <FormSelect
-              label="Lecturer"
-              data={getLecturersData()}
-              name="lecturerId"
-              register={registerCreate}
-              errors={errorsCreate}
-            />
-            <FormSelect
-              label="Room"
-              data={getCabinetsData()}
-              name="cabinetRoomName"
-              register={registerCreate}
-              errors={errorsCreate}
-            />
-            <FormSelect
-              label="Type"
-              data={getEventFormTypesData()}
-              name="eventFormType"
-              register={registerCreate}
-              errors={errorsCreate}
-            />
-          </ModalCreate>
+
+					<div className="flex gap-2">
+						<FilterSection
+							onSubmit={onSubmitFilter}
+							resetFilter={resetFilterBtn}
+						>
+							<FormSelect
+								label="Exam Type"
+								data={getEventFormTypesData()}
+								name="examType"
+								register={registerFilter}
+								errors={errorsFilter}
+							/>
+							<FormDateTime
+								name="dateStart"
+								register={registerFilter}
+								errors={errorsFilter}
+								watch={watchFilter}
+								setValue={setValueFilter}
+								label="Start date"
+								maxDate={new Date("2030-01-01")}
+							/>
+							<FormDateTime
+								name="dateEnd"
+								register={registerFilter}
+								errors={errorsFilter}
+								watch={watchFilter}
+								setValue={setValueFilter}
+								label="End date"
+								maxDate={new Date("2030-01-01")}
+							/>
+						</FilterSection>						
+
+            <ModalCreate
+              reset={resetCreate}
+              name="exam"
+              onSubmit={handleSubmitBtn}
+              loading={false}
+              error={null}
+              setIsCreatedSuccess={setIsCreatedSuccess}
+              isCreatedSuccess={isCreatedSuccess}
+            >
+              <FormSelect
+                label="Discipline"
+                data={getDisciplinesData()}
+                name="disciplineName"
+                register={registerCreate}
+                errors={errorsCreate}
+                required
+              />
+              <FormDateTime
+                name="eventDateTime"
+                register={registerCreate}
+                errors={errorsCreate}
+                watch={watchCreate}
+                setValue={setValueCreate}
+                maxDate={new Date("2030-01-01")}
+                label="Event date and time"
+                required
+              />
+              <FormSelect
+                label="Lecturer"
+                data={getLecturersData()}
+                name="lecturerId"
+                register={registerCreate}
+                errors={errorsCreate}
+                required
+              />
+              <FormSelect
+                label="Room"
+                data={getCabinetsData()}
+                name="cabinetRoomName"
+                register={registerCreate}
+                errors={errorsCreate}
+                required
+              />
+              <FormSelect
+                label="Type"
+                data={getEventFormTypesData()}
+                name="eventFormType"
+                register={registerCreate}
+                errors={errorsCreate}
+                required
+              />
+            </ModalCreate>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -462,7 +540,7 @@ const filteredExams = useMemo(() => {
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
-												{renderCell(item, columnKey as string)}
+                        {renderCell(item, columnKey as string)}
                       </TableCell>
                     )
                   }
@@ -496,6 +574,7 @@ const filteredExams = useMemo(() => {
                   selectedItem?.disciplineName || ""
                 );
               }}
+              required
             />
             <FormDateTime
               name="eventDatetime"
@@ -509,6 +588,7 @@ const filteredExams = useMemo(() => {
                 )
               }
               value={selectedItem?.eventDatetime}
+              required
             />
             <FormSelect
               label="Lecturer"
@@ -520,6 +600,7 @@ const filteredExams = useMemo(() => {
               setValue={() =>
                 setValueUpdate("lecturerId", selectedItem?.lecturerId || "")
               }
+              required
             />
             {/* //TODO: добавить cabinet и event_form_type */}
           </ModalUpdate>

@@ -1,4 +1,5 @@
 import StatementDTO from "@/types/Statement/StatementDTO";
+import StatementFilter from "@/types/Statement/StatementFilter";
 import StatementPromise from "@/types/Statement/StatementPromise";
 import StatementsPromise from "@/types/Statement/StatementsPromise";
 
@@ -11,6 +12,23 @@ export async function getStatements(): Promise<StatementsPromise> {
 		next: {
 			revalidate: 5 // revalidate every 5 seconds
 		}
+	});
+	const data = await res.json();
+	return data;
+}
+
+export async function getFilteredStatements(filter: StatementFilter): Promise<StatementsPromise> {
+	const queryString = new URLSearchParams(filter as Record<string, string>).toString();
+	const url = `${process.env.NEXT_PUBLIC_API_URL}/Statement?${queryString}`;
+	console.log(url);
+	const res = await fetch(url, {
+		method: 'GET',
+		next: {
+			revalidate: 5 // revalidate every 5 seconds
+		},
+		headers: {
+			'Content-Type': 'application/json'
+		},
 	});
 	const data = await res.json();
 	return data;

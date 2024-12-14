@@ -7,7 +7,7 @@ import {
   getDepartments,
 	updateDepartment,
 } from "@/api/departmentApi";
-import ModalDetail from "@/components/ModalDetail";
+import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
   TableHeader,
@@ -23,13 +23,13 @@ import {
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/ModalCreate";
+import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/FormInput";
-import ModalDelete from "@/components/ModalDelete";
+import FormInput from "@/components/Form/FormInput";
+import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/ModalUpdate";
+import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
 import DepartmentDTO from "@/types/Department/DepartmentDTO";
 import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
@@ -216,6 +216,7 @@ export default function DisciplinesPage() {
               maxLength={100}
               type="text"
               label="Name"
+							required
             />
           </ModalCreate>
         </div>
@@ -334,6 +335,7 @@ export default function DisciplinesPage() {
               setValue={() => {
                 setValueUpdate("name", selectedItem?.name || "");
               }}
+							required
             />
           </ModalUpdate>
         </div>

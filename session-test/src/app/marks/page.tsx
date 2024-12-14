@@ -1,6 +1,6 @@
 "use client";
 
-import ModalDetail from "@/components/ModalDetail";
+import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
   TableHeader,
@@ -15,14 +15,14 @@ import {
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/ModalCreate";
+import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import ModalDelete from "@/components/ModalDelete";
+import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/ModalUpdate";
+import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
-import FormSelect from "@/components/FormSelect";
+import FormSelect from "@/components/Form/FormSelect";
 import StatementsPromise from "@/types/Statement/StatementsPromise";
 import {
   getStatements,
@@ -357,6 +357,7 @@ export default function MarksPage() {
               name="mark1"
               register={registerCreate}
               errors={errorsCreate}
+							required
             />
             <FormSelect
               label="Student"
@@ -364,6 +365,7 @@ export default function MarksPage() {
               name="studentId"
               register={registerCreate}
               errors={errorsCreate}
+							required
             />
             <FormSelect
               label="Statement"
@@ -371,6 +373,7 @@ export default function MarksPage() {
               name="statementId"
               register={registerCreate}
               errors={errorsCreate}
+							required
             />
           </ModalCreate>
         </div>
@@ -495,6 +498,8 @@ export default function MarksPage() {
               setValue={() => {
                 setValueUpdate("mark1", selectedItem?.mark1 || "");
               }}
+							required
+
             />
             <FormSelect
               label="Student"
@@ -505,6 +510,7 @@ export default function MarksPage() {
               setValue={() => {
                 setValueUpdate("studentId", selectedItem?.studentId || "");
               }}
+							required
             />
             <FormSelect
               label="Statement"
@@ -515,6 +521,7 @@ export default function MarksPage() {
               setValue={() => {
                 setValueUpdate("statementId", selectedItem?.statementId || "");
               }}
+							required
             />
           </ModalUpdate>
         </div>

@@ -1,4 +1,5 @@
 import StudentDTO from "@/types/Student/StudentDTO";
+import StudentFilter from "@/types/Student/StudentFilter";
 import StudentPromise from "@/types/Student/StudentPromise";
 import StudentsPromise from "@/types/Student/StudentsPromise";
 
@@ -11,6 +12,23 @@ export async function getStudents(): Promise<StudentsPromise> {
 		next: {
 			revalidate: 5 // revalidate every 5 seconds
 		}
+	});
+	const data = await res.json();
+	return data;
+}
+
+export async function getFilteredStudents(filter: StudentFilter): Promise<StudentsPromise> {
+	const queryString = new URLSearchParams(filter as Record<string, string>).toString();
+	const url = `${process.env.NEXT_PUBLIC_API_URL}/Student?${queryString}`;
+	console.log(url);
+	const res = await fetch(url, {
+		method: 'GET',
+		next: {
+			revalidate: 5 // revalidate every 5 seconds
+		},
+		headers: {
+			'Content-Type': 'application/json'
+		},
 	});
 	const data = await res.json();
 	return data;

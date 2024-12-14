@@ -15,6 +15,7 @@ interface FormSelectProps {
   errors: any;
   defaultSelectedValue?: string;
 	setValue?: any;
+	required?: boolean;
 }
 
 export default function FormSelect({
@@ -25,6 +26,7 @@ export default function FormSelect({
   name,
   defaultSelectedValue,
 	setValue,
+	required,
 }: FormSelectProps) {
   const [resolvedData, setResolvedData] = useState<any[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | undefined>(
@@ -46,13 +48,12 @@ export default function FormSelect({
   return (
     <>
 			<Autocomplete
-				isRequired
         label={label}
         defaultItems={resolvedData.map((item) => ({
           key: item,
           label: item,
 				}))}
-        {...register(name, { required: `${label} is required` })}
+        {...register(name, { required: required ? `${label} is required` : undefined })}
         isInvalid={!!errors[name]?.message}
         errorMessage={errors[name]?.message as string}
         selectedKey={selectedKey}

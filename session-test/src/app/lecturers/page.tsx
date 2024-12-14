@@ -3,7 +3,7 @@
 import {
   getDepartments,
 } from "@/api/departmentApi";
-import ModalDetail from "@/components/ModalDetail";
+import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
   TableHeader,
@@ -19,20 +19,20 @@ import {
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/ModalCreate";
+import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/FormInput";
-import ModalDelete from "@/components/ModalDelete";
+import FormInput from "@/components/Form/FormInput";
+import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/ModalUpdate";
+import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
-import FormSelect from "@/components/FormSelect";
+import FormSelect from "@/components/Form/FormSelect";
 import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 import LecturersPromise from "@/types/Lecturer/LecturersPromise";
 import LecturerDTO from "@/types/Lecturer/LecturerDTO";
 import { createLecturer, deleteLecturer, getLecturer, getLecturers } from "@/api/lecturerApi";
-import FormDateOnly from "@/components/FormDateOnly";
+import FormDateOnly from "@/components/Form/FormDateOnly";
 import sortData from "@/functions/sortData";
 
 let cachedDepartments: string[] | null = null;
@@ -248,6 +248,7 @@ export default function LecturersPage() {
               maxLength={100}
               type="text"
               label="First Name"
+							required
             />
             <FormInput
               name="surname"
@@ -256,6 +257,7 @@ export default function LecturersPage() {
               maxLength={100}
               type="text"
               label="Last Name"
+							required
             />
             <FormInput
               name="patronymic"
@@ -264,6 +266,7 @@ export default function LecturersPage() {
               maxLength={100}
               type="text"
               label="Patronymic"
+							required
             />
             <FormDateOnly
               name="birthdate"
@@ -272,6 +275,7 @@ export default function LecturersPage() {
               errors={errorsCreate}
               watch={watchCreate}
               setValue={setValueCreate}
+							required
             />
             <FormSelect
               label="Department"
@@ -279,6 +283,7 @@ export default function LecturersPage() {
               name="departmentName"
               register={registerCreate}
               errors={errorsCreate}
+							required
             />
           </ModalCreate>
         </div>
@@ -397,6 +402,7 @@ export default function LecturersPage() {
               setValue={() => {
                 setValueUpdate("firstname", selectedItem?.firstname || "");
               }}
+							required
             />
             <FormInput
               name="surname"
@@ -408,6 +414,7 @@ export default function LecturersPage() {
               setValue={() => {
                 setValueUpdate("surname", selectedItem?.surname || "");
               }}
+							required
             />
             <FormInput
               name="patronymic"
@@ -419,6 +426,7 @@ export default function LecturersPage() {
               setValue={() => {
                 setValueUpdate("patronymic", selectedItem?.patronymic || "");
               }}
+							required
             />
             <FormDateOnly
               name="birthdate"
@@ -430,6 +438,7 @@ export default function LecturersPage() {
                 setValueUpdate("birthdate", selectedItem?.birthdate || "")
               }
               value={selectedItem?.birthdate}
+							required
             />
             <FormSelect
               label="Department"
@@ -444,6 +453,7 @@ export default function LecturersPage() {
                   selectedItem?.departmentName || "ww"
                 )
               }
+							required
             />
           </ModalUpdate>
         </div>

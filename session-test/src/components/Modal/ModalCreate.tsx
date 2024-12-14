@@ -55,10 +55,10 @@ export default function ModalCreate<T>({
         <Button
           isIconOnly
           size="sm"
-          color="primary"
+          color='secondary'
           variant="shadow"
           onPress={onOpen}
-          startContent={<MdOutlineLibraryAdd />}
+          startContent={<MdOutlineLibraryAdd className="text-lg"/>}
         ></Button>
       </Tooltip>
 

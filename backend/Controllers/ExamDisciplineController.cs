@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using backend.Extensions;
+using backend.Filters;
 
 namespace backend.Controllers
 {
@@ -23,7 +25,7 @@ namespace backend.Controllers
 
         // GET: api/ExamDiscipline
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ExamDiscipline>>> GetExamDisciplines()
+        public async Task<ActionResult<IEnumerable<ExamDiscipline>>> GetExamDisciplines([FromQuery] ExamDisciplineFilter filter)
         {
 			var exams = await _context.ExamDisciplines
 				.Include(e => e.Lecturer)
@@ -45,6 +47,7 @@ namespace backend.Controllers
 						DepartmentName = exam.Lecturer.DepartmentName
 					}
 				})
+				.Filter(filter)
 				.ToListAsync();
 			return exams;
         }

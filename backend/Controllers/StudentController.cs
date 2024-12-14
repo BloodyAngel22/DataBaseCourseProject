@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using backend.Models;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.Xml;
+using backend.Filters;
+using backend.Extensions;
 
 namespace backend.Controllers
 {
@@ -24,9 +26,9 @@ namespace backend.Controllers
 
         // GET: api/Student
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
+        public async Task<ActionResult<IEnumerable<Student>>> GetStudents([FromQuery] StudentFilter filter)
         {
-			return Ok(await _context.Students.AsNoTracking().OrderBy(s => s.Course).ThenBy(s => s.GroupName).ThenBy(s => s.Surname).ToListAsync());
+			return Ok(await _context.Students.AsNoTracking().OrderBy(s => s.Course).ThenBy(s => s.GroupName).ThenBy(s => s.Surname).Filter(filter).ToListAsync());
         }
 
         // GET: api/Student/5

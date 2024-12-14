@@ -3,7 +3,7 @@
 import {
   getDepartments,
 } from "@/api/departmentApi";
-import ModalDetail from "@/components/ModalDetail";
+import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
   TableHeader,
@@ -19,16 +19,16 @@ import {
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/ModalCreate";
+import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/FormInput";
-import ModalDelete from "@/components/ModalDelete";
+import FormInput from "@/components/Form/FormInput";
+import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/ModalUpdate";
+import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
 import { createGroup, deleteGroup, getGroup, getGroups, updateGroup } from "@/api/groupApi";
-import FormSelect from "@/components/FormSelect";
+import FormSelect from "@/components/Form/FormSelect";
 import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 import GroupDTO from "@/types/Group/GroupDTO";
 import GroupsPromise from "@/types/Group/GroupsPromise";
@@ -219,6 +219,7 @@ export default function GroupsPage() {
               maxLength={100}
               type="text"
               label="Name"
+							required
             />
             <FormSelect
               label="Department"
@@ -226,6 +227,7 @@ export default function GroupsPage() {
               name="departmentName"
               register={registerCreate}
               errors={errorsCreate}
+							required
             />
           </ModalCreate>
         </div>
@@ -344,6 +346,7 @@ export default function GroupsPage() {
               setValue={() => {
                 setValueUpdate("name", selectedItem?.name || "");
               }}
+							required
             />
             <FormSelect
               label="Department"
@@ -358,6 +361,7 @@ export default function GroupsPage() {
                   selectedItem?.departmentName || "ww"
                 )
               }
+							required
             />
           </ModalUpdate>
         </div>
