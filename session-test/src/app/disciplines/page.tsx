@@ -11,29 +11,19 @@ import {
   getKeyValue,
   Button,
   Pagination,
-	Tooltip,
 	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/Modal/ModalCreate";
-import { useForm } from "react-hook-form";
-import FormInput from "@/components/Form/FormInput";
-import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/Modal/ModalUpdate";
-import { FiEdit3 } from "react-icons/fi";
-import DepartmentDTO from "@/types/Department/DepartmentDTO";
-import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 import DisciplinesPromise from "@/types/Discipline/DisciplinesPromise";
 import DisciplineDTO from "@/types/Discipline/DisciplineDTO";
-import { createDiscipline, deleteDiscipline, getDiscipline, getDisciplines, updateDiscipline } from "@/api/disciplineApi";
+import { getDiscipline, getDisciplines } from "@/api/disciplineApi";
 import sortData from "@/functions/sortData";
 
 export default function DisciplinesPage() {
   const [disciplines, setDisciplines] = useState<DisciplinesPromise>();
-  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
 	const [page, setPage] = useState(1);
 
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -65,89 +55,9 @@ export default function DisciplinesPage() {
     return sortedDisciplines.slice(start, end);
   }, [sortedDisciplines, page]);
 
-  const [selectedItem, setSelectedItem] = useState<DisciplineDTO | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (item: DisciplineDTO) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const {
-    register: registerCreate,
-    handleSubmit: handleSubmitCreate,
-    reset: resetCreate,
-    formState: { errors: errorsCreate },
-  } = useForm<DisciplineDTO>({ mode: "onChange", defaultValues: { name: "" } });
-
-  const {
-    register: registerUpdate,
-    handleSubmit: handleSubmitUpdate,
-    reset: resetUpdate,
-    setValue: setValueUpdate,
-    formState: { errors: errorsUpdate },
-  } = useForm<DisciplineDTO>({ mode: "onChange", defaultValues: { name: "" } });
-
-  const [id, setId] = useState("");
-
   if (disciplines) {
     pages = Math.ceil(sortedDisciplines.length / rowsPerPage);
   }
-
-  const handleSubmitBtn = handleSubmitCreate(async (data) => {
-    try {
-      const response = await createDiscipline(data);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getDisciplines();
-        setDisciplines(data);
-        resetCreate();
-        setIsCreatedSuccess(true);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
-
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await deleteDiscipline(id);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getDisciplines();
-        setDisciplines(data);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-
-	const handleUpdate = handleSubmitUpdate(async (data: DisciplineDTO) => {
-		if (data.name === id) {
-			setIsModalOpen(false);
-			setSelectedItem(null);
-			return;
-		};
-    console.log("update", id, data);
-    try {
-      const response = await updateDiscipline(id, data);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getDisciplines();
-				setDisciplines(data);
-				setIsModalOpen(false);
-				setSelectedItem(null);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
 
   useEffect(() => {
     const fetchDisciplines = async () => {

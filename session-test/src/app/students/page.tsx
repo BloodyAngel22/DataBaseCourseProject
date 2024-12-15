@@ -11,26 +11,20 @@ import {
   getKeyValue,
   Button,
   Pagination,
-	Tooltip,
 	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/Form/FormInput";
-import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/Modal/ModalUpdate";
-import { FiEdit3 } from "react-icons/fi";
 import { getGroups } from "@/api/groupApi";
 import FormSelect from "@/components/Form/FormSelect";
 import GroupsPromise from "@/types/Group/GroupsPromise";
 import FormDateOnly from "@/components/Form/FormDateOnly";
 import StudentsPromise from "@/types/Student/StudentsPromise";
-import StudentDTO from "@/types/Student/StudentDTO";
-import { createStudent, deleteStudent, getFilteredStudents, getStudent, getStudents } from "@/api/studentApi";
+import { getFilteredStudents, getStudent, getStudents } from "@/api/studentApi";
 import sortData from "@/functions/sortData";
 import FilterSection from "@/components/FilterSection";
 import StudentFilter from "@/types/Student/StudentFilter";
@@ -40,7 +34,6 @@ let cachedGroups: string[] | null = null;
 //FIXME: Сделать возможность изменения даты рождения студента 
 export default function StudentsPage() {
   const [students, setStudents] = useState<StudentsPromise>();
-  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
 	const [page, setPage] = useState(1);
 	
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -85,32 +78,6 @@ export default function StudentsPage() {
     return sortedStudents.slice(start, end);
   }, [sortedStudents, page]);
 
-  const [selectedItem, setSelectedItem] = useState<StudentDTO | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (item: StudentDTO) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const {
-    register: registerCreate,
-    handleSubmit: handleSubmitCreate,
-		reset: resetCreate,
-		watch: watchCreate,
-		setValue: setValueCreate,
-    formState: { errors: errorsCreate },
-  } = useForm<StudentDTO>({ mode: "onChange", defaultValues: { firstname: "", surname: "", patronymic: "", birthdate: "", groupName: "" } });
-
-  const {
-    register: registerUpdate,
-    handleSubmit: handleSubmitUpdate,
-		reset: resetUpdate,
-		watch: watchUpdate,
-    setValue: setValueUpdate,
-    formState: { errors: errorsUpdate },
-	} = useForm<StudentDTO>({ mode: "onChange", defaultValues: { firstname: "", surname: "", patronymic: "", birthdate: "", groupName: "" } });
-	
 	const {
 		register: registerFilter,
 		handleSubmit: handleSubmitFilter,
@@ -120,63 +87,9 @@ export default function StudentsPage() {
 		formState: { errors: errorsFilter },
 	} = useForm<StudentFilter>({ mode: "onChange", defaultValues: { course: "", groupName: "", dateStart: "", dateEnd: "" } });
 
-  const [id, setId] = useState("");
-
   if (students) {
     pages = Math.ceil(sortedStudents.length / rowsPerPage);
   }
-
-	const handleSubmitBtn = handleSubmitCreate(async (data) => {
-		console.log("create", data);
-    try {
-      const response = await createStudent(data);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getStudents();
-        setStudents(data);
-        resetCreate();
-        setIsCreatedSuccess(true);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
-
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await deleteStudent(id);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getStudents();
-        setStudents(data);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-
-	const handleUpdate = handleSubmitUpdate(async (data: StudentDTO) => {
-		console.log("update", id, data);
-
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-		// 		setLecturers(data);
-		// 		setIsModalOpen(false);
-		// 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
-  });
 
   useEffect(() => {
     const fetchStudents = async () => {

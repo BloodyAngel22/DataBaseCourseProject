@@ -1,8 +1,5 @@
 "use client";
 
-import {
-  getDepartments,
-} from "@/api/departmentApi";
 import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
@@ -14,25 +11,14 @@ import {
   getKeyValue,
   Button,
   Pagination,
-	Tooltip,
 	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/Modal/ModalCreate";
-import { useForm } from "react-hook-form";
-import FormInput from "@/components/Form/FormInput";
-import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/Modal/ModalUpdate";
-import { FiEdit3 } from "react-icons/fi";
-import FormSelect from "@/components/Form/FormSelect";
-import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 import LecturersPromise from "@/types/Lecturer/LecturersPromise";
-import LecturerDTO from "@/types/Lecturer/LecturerDTO";
-import { createLecturer, deleteLecturer, getLecturer, getLecturers } from "@/api/lecturerApi";
-import FormDateOnly from "@/components/Form/FormDateOnly";
+import { getLecturer, getLecturers } from "@/api/lecturerApi";
 import sortData from "@/functions/sortData";
 
 let cachedDepartments: string[] | null = null;
@@ -40,7 +26,6 @@ let cachedDepartments: string[] | null = null;
 //FIXME: Сделать возможность изменения даты рождения лектора
 export default function LecturersPage() {
   const [lecturers, setLecturers] = useState<LecturersPromise>();
-  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
 	const [page, setPage] = useState(1);
 	
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -85,89 +70,9 @@ export default function LecturersPage() {
     return sortedLecturers.slice(start, end);
   }, [sortedLecturers, page]);
 
-  const [selectedItem, setSelectedItem] = useState<LecturerDTO | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (item: LecturerDTO) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const {
-    register: registerCreate,
-    handleSubmit: handleSubmitCreate,
-		reset: resetCreate,
-		watch: watchCreate,
-		setValue: setValueCreate,
-    formState: { errors: errorsCreate },
-  } = useForm<LecturerDTO>({ mode: "onChange", defaultValues: { firstname: "", surname: "", patronymic: "", birthdate: "", departmentName: "" } });
-
-  const {
-    register: registerUpdate,
-    handleSubmit: handleSubmitUpdate,
-		reset: resetUpdate,
-		watch: watchUpdate,
-    setValue: setValueUpdate,
-    formState: { errors: errorsUpdate },
-  } = useForm<LecturerDTO>({ mode: "onChange", defaultValues: { firstname: "", surname: "", patronymic: "", birthdate: "", departmentName: "" } });
-
-  const [id, setId] = useState("");
-
   if (lecturers) {
     pages = Math.ceil(sortedLecturers.length / rowsPerPage);
   }
-
-	const handleSubmitBtn = handleSubmitCreate(async (data) => {
-		console.log("create", data);
-    try {
-      const response = await createLecturer(data);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getLecturers();
-        setLecturers(data);
-        resetCreate();
-        setIsCreatedSuccess(true);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
-
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await deleteLecturer(id);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getLecturers();
-        setLecturers(data);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-
-	const handleUpdate = handleSubmitUpdate(async (data: LecturerDTO) => {
-		console.log("update", id, data);
-
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-		// 		setLecturers(data);
-		// 		setIsModalOpen(false);
-		// 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
-  });
 
   useEffect(() => {
     const fetchLecturers = async () => {
@@ -189,21 +94,6 @@ export default function LecturersPage() {
     { key: "departmentName", label: "Department", sortable: true },
     { key: "actions", label: "Actions", sortable: false },
 	];
-
-	
-	const getDepartmentsData = async (): Promise<string[]> => {
-		if (cachedDepartments) {
-			return cachedDepartments;
-		}
-
-		const departments: string[] = [];
-		const response: DepartmentsPromise = await getDepartments();
-		for (const department of response.$values) {
-			departments.push(department.name);
-		}
-		cachedDepartments = departments;
-		return departments;
-	}
 
 		const handleSort = (key: string) => {
 		if (sortColumn === key) {

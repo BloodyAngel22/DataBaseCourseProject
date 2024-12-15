@@ -11,27 +11,18 @@ import {
   getKeyValue,
   Button,
   Pagination,
-	Tooltip,
 	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/Modal/ModalCreate";
-import { useForm } from "react-hook-form";
-import FormInput from "@/components/Form/FormInput";
-import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/Modal/ModalUpdate";
-import { FiEdit3 } from "react-icons/fi";
-import { createCabinet, deleteCabinet, getCabinet, getCabinets, updateCabinet } from "@/api/cabinetApi";
-import CabinetDTO from "@/types/Cabinet/CabinetDTO";
+import { getCabinet, getCabinets } from "@/api/cabinetApi";
 import CabinetsPromise from "@/types/Cabinet/CabinetsPromise";
 import sortData from "../../functions/sortData";
 
 export default function CabinetsPage() {
   const [cabinets, setCabinets] = useState<CabinetsPromise>();
-  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
 	const [page, setPage] = useState(1);
 	
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -63,89 +54,9 @@ export default function CabinetsPage() {
     return sortedCabinets.slice(start, end);
   }, [sortedCabinets, page]);
 
-  const [selectedItem, setSelectedItem] = useState<CabinetDTO | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (item: CabinetDTO) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const {
-    register: registerCreate,
-    handleSubmit: handleSubmitCreate,
-    reset: resetCreate,
-    formState: { errors: errorsCreate },
-  } = useForm<CabinetDTO>({ mode: "onChange", defaultValues: { roomName: "" } });
-
-  const {
-    register: registerUpdate,
-    handleSubmit: handleSubmitUpdate,
-    reset: resetUpdate,
-    setValue: setValueUpdate,
-    formState: { errors: errorsUpdate },
-  } = useForm<CabinetDTO>({ mode: "onChange", defaultValues: { roomName: "" } });
-
-  const [id, setId] = useState("");
-
   if (cabinets) {
     pages = Math.ceil(sortedCabinets.length / rowsPerPage);
   }
-
-  const handleSubmitBtn = handleSubmitCreate(async (data) => {
-    try {
-      const response = await createCabinet(data);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getCabinets();
-        setCabinets(data);
-        resetCreate();
-        setIsCreatedSuccess(true);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
-
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await deleteCabinet(id);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getCabinets();
-        setCabinets(data);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-
-	const handleUpdate = handleSubmitUpdate(async (data: CabinetDTO) => {
-		if (data.roomName === id) {
-			setIsModalOpen(false);
-			setSelectedItem(null);
-			return;
-		};
-    console.log("update", id, data);
-    try {
-      const response = await updateCabinet(id, data);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getCabinets();
-				setCabinets(data);
-				setIsModalOpen(false);
-				setSelectedItem(null);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
 
   useEffect(() => {
     const fetchCabinets = async () => {

@@ -1,8 +1,5 @@
 "use client";
 
-import {
-  getDepartments,
-} from "@/api/departmentApi";
 import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
@@ -14,29 +11,18 @@ import {
   getKeyValue,
   Button,
   Pagination,
-	Tooltip,
 	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/Modal/ModalCreate";
-import { useForm } from "react-hook-form";
-import FormInput from "@/components/Form/FormInput";
-import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/Modal/ModalUpdate";
-import { FiEdit3 } from "react-icons/fi";
-import { createGroup, deleteGroup, getGroup, getGroups, updateGroup } from "@/api/groupApi";
-import FormSelect from "@/components/Form/FormSelect";
-import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
-import GroupDTO from "@/types/Group/GroupDTO";
+import { getGroup, getGroups } from "@/api/groupApi";
 import GroupsPromise from "@/types/Group/GroupsPromise";
 import sortData from "@/functions/sortData";
 
 export default function GroupsPage() {
   const [groups, setGroups] = useState<GroupsPromise>();
-  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
 	const [page, setPage] = useState(1);
 
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -68,86 +54,9 @@ export default function GroupsPage() {
     return sortedGroups.slice(start, end);
   }, [sortedGroups, page]);
 
-  const [selectedItem, setSelectedItem] = useState<GroupDTO | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (item: GroupDTO) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const {
-    register: registerCreate,
-    handleSubmit: handleSubmitCreate,
-    reset: resetCreate,
-    formState: { errors: errorsCreate },
-  } = useForm<GroupDTO>({ mode: "onChange", defaultValues: { name: "", departmentName: "" } });
-
-  const {
-    register: registerUpdate,
-    handleSubmit: handleSubmitUpdate,
-    reset: resetUpdate,
-    setValue: setValueUpdate,
-    formState: { errors: errorsUpdate },
-  } = useForm<GroupDTO>({ mode: "onChange", defaultValues: { name: "", departmentName: "" } });
-
-  const [id, setId] = useState("");
-
   if (groups) {
     pages = Math.ceil(sortedGroups.length / rowsPerPage);
   }
-
-	const handleSubmitBtn = handleSubmitCreate(async (data) => {
-		console.log("create", data);
-    try {
-      const response = await createGroup(data);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getGroups();
-        setGroups(data);
-        resetCreate();
-        setIsCreatedSuccess(true);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
-
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await deleteGroup(id);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getGroups();
-        setGroups(data);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-
-	const handleUpdate = handleSubmitUpdate(async (data: GroupDTO) => {
-		console.log("update", id, data);
-
-    try {
-      const response = await updateGroup(id, data);
-      console.log(response);
-      if (response.success === true) {
-        const data = await getGroups();
-				setGroups(data);
-				setIsModalOpen(false);
-				setSelectedItem(null);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -167,15 +76,6 @@ export default function GroupsPage() {
     { key: "actions", label: "Actions", sortable: false },
 	];
 	
-	const getDepartmentsData = async () => {
-		const departments: any[] = [];
-		const response: DepartmentsPromise = await getDepartments();
-		for (const department of response.$values) {
-			departments.push(department.name);
-		}
-		return departments;
-	}
-
 	const handleSort = (key: string) => {
 		if (sortColumn === key) {
 			setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));

@@ -10,32 +10,21 @@ import {
   TableRow,
   Button,
   Pagination,
-  Tooltip,
-	Input,
+  Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/Modal/ModalCreate";
-import { useForm } from "react-hook-form";
-import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/Modal/ModalUpdate";
-import { FiEdit3 } from "react-icons/fi";
-import FormSelect from "@/components/Form/FormSelect";
 import StatementsPromise from "@/types/Statement/StatementsPromise";
 import {
   getStatements,
 } from "@/api/statementApi";
 import MarksPromise from "@/types/Mark/MarksPromise";
 import StudentsPromise from "@/types/Student/StudentsPromise";
-import MarkDTO from "@/types/Mark/MarkDTO";
-import { createMark, deleteMark, getMark, getMarks } from "@/api/markApi";
+import { getMark, getMarks } from "@/api/markApi";
 import { getStudents } from "@/api/studentApi";
 import sortData from "@/functions/sortData";
-
-let cachedStatements: string[] | null = null;
-let cachedStudents: string[] | null = null;
 
 export default function MarksPage() {
   const [marks, setMarks] = useState<MarksPromise>();
@@ -47,7 +36,6 @@ export default function MarksPage() {
 	const [sortColumn, setSortColumn] = useState<string | null>(null);
 	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");	
 
-  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
   const [page, setPage] = useState(1);
   const rowsPerPage = 5;
 	let pages = 0;
@@ -87,125 +75,9 @@ export default function MarksPage() {
     return sortedMarks.slice(start, end);
   }, [sortedMarks, page]);
 
-  const [selectedItem, setSelectedItem] = useState<MarkDTO | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (item: MarkDTO) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const {
-    register: registerCreate,
-    handleSubmit: handleSubmitCreate,
-    reset: resetCreate,
-    watch: watchCreate,
-    setValue: setValueCreate,
-    formState: { errors: errorsCreate },
-  } = useForm<MarkDTO>({
-    mode: "onChange",
-    defaultValues: { mark1: "", studentId: "", statementId: "" },
-  });
-
-  const {
-    register: registerUpdate,
-    handleSubmit: handleSubmitUpdate,
-    reset: resetUpdate,
-    watch: watchUpdate,
-    setValue: setValueUpdate,
-    formState: { errors: errorsUpdate },
-  } = useForm<MarkDTO>({
-    mode: "onChange",
-    defaultValues: { mark1: "", studentId: "", statementId: "" },
-  });
-
-	const [id, setId] = useState("");
-	const [id2, setId2] = useState("");
-
   if (marks) {
     pages = Math.ceil(sortedMarks.length / rowsPerPage);
   }
-
-  const handleSubmitBtn = handleSubmitCreate(async (data) => {
-		const { firstname, surname, patronymic } = getStudentByName(data.studentId);
-		students?.$values?.forEach((item) => {
-			if (
-				item.firstname === firstname &&
-				item.surname === surname &&
-				item.patronymic === patronymic
-			) {
-				data.studentId = item.id;
-			}
-		})
-
-		const { examDiscipline, date } = getExamDisciplineByNameDate(data.statementId);
-		statements?.$values?.forEach((item) => {
-			if (
-				item.examDiscipline.disciplineName === examDiscipline &&
-				item.examDiscipline.eventDatetime === date
-			) {
-				data.statementId = item.id;
-			}
-		})
-
-    console.log("create", data);
-
-    try {
-      const response = await createMark(data);
-      console.log(response);
-      if (response.success === true) {
-				const data = await getMarks();
-				data?.$values.forEach((item) => {
-				item.student.fio = `${item.student.surname} ${item.student.firstname} ${item.student.patronymic}`;
-			})
-        setMarks(data);
-        resetCreate();
-        setIsCreatedSuccess(true);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
-
-	const handleDelete = async (studentId: string, statementId: string) => {
-		console.log("delete", studentId, statementId);
-    try {
-      const response = await deleteMark(studentId, statementId);
-      console.log(response);
-      if (response.success === true) {
-				const data = await getMarks();
-				data?.$values.forEach((item) => {
-				item.student.fio = `${item.student.surname} ${item.student.firstname} ${item.student.patronymic}`;
-			})
-        setMarks(data);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-
-  const handleUpdate = handleSubmitUpdate(async (data: MarkDTO) => {
-    console.log("update", id, data);
-
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-    // 		setLecturers(data);
-    // 		setIsModalOpen(false);
-    // 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
-  });
 
   useEffect(() => {
     const fetchMarks = async () => {
@@ -247,57 +119,6 @@ export default function MarksPage() {
     { key: "actions", label: "Actions", sortable: false },
 	];
 	
-	const getStudentByName = (data: string): { firstname: string; surname: string; patronymic: string }=> {
-		const firstname = data.split(" ")[0];
-		const surname = data.split(" ")[1];
-		const patronymic = data.split(" ")[2];
-		return { firstname, surname, patronymic };
-	}
-
-  const getExamDisciplineByNameDate = (
-    data: string
-  ): { examDiscipline: string; date: string } => {
-    const examDiscipline = data.split("(")[0].trim();
-    const date = data.split("(")[1].split(")")[0].trim();
-    return { examDiscipline, date };
-  };
-
-  const getStatementsData = async (): Promise<string[]> => {
-    if (cachedStatements) {
-      return cachedStatements;
-    }
-
-    const statements: string[] = [];
-    const response: StatementsPromise = await getStatements();
-    for (const statement of response.$values) {
-      const value = `${statement.examDiscipline.disciplineName} (${statement.examDiscipline.eventDatetime})`;
-      statements.push(value);
-    }
-    cachedStatements = statements;
-    return statements;
-	};
-	
-	const getStudentsData = async (): Promise<string[]> => {
-		if (cachedStudents) {
-			return cachedStudents;
-		}
-		
-		const students: string[] = [];
-		const response: StudentsPromise = await getStudents();
-		for (const student of response.$values) {
-			const value = `${student.surname} ${student.firstname} ${student.patronymic}`;
-			students.push(value);
-		}
-		cachedStudents = students;
-		return students;
-	}
-
-	const getMarksData = (): string[] => {
-		const marks = ["отлично", "хорошо", "удовлетворительно", "неудовлетворительно", "зачет", "не зачтено"];
-
-		return marks;
-	}
-
 	const getFIOStudentById = (id: string) => {
 		if (!students) {
 			return "Unknown";

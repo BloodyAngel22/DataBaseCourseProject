@@ -8,35 +8,23 @@ import {
   TableBody,
   TableCell,
   TableRow,
-  getKeyValue,
   Button,
   Pagination,
-	Tooltip,
 	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
-import FormInput from "@/components/Form/FormInput";
-import ModalDelete from "@/components/Modal/ModalDelete";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
-import ModalUpdate from "@/components/Modal/ModalUpdate";
-import { FiEdit3 } from "react-icons/fi";
 import FormSelect from "@/components/Form/FormSelect";
 import LecturersPromise from "@/types/Lecturer/LecturersPromise";
 import { getLecturers } from "@/api/lecturerApi";
 import ExamDisciplinesPromise from "@/types/ExamDiscipline/ExamDisciplinesPromise";
-import ExamDisciplineDTO from "@/types/ExamDiscipline/ExamDisciplineDTO";
-import { createExamDiscipline, deleteExamDiscipline, getExamDiscipline, getExamDisciplines, getFilteredExamDisciplines } from "@/api/examDisciplineApi";
+import { getExamDiscipline, getExamDisciplines, getFilteredExamDisciplines } from "@/api/examDisciplineApi";
 import FormDateTime from "@/components/Form/FormDateTime";
-import CabinetsPromise from "@/types/Cabinet/CabinetsPromise";
-import { getCabinets } from "@/api/cabinetApi";
 import EventFormTypesPromise from "@/types/EventFormType/EventFormTypesPromise";
 import { getEventFormTypes } from "@/api/EventFormTypeApi";
-import DisciplinesPromise from "@/types/Discipline/DisciplinesPromise";
-import { getDisciplines } from "@/api/disciplineApi";
 import sortData from "@/functions/sortData";
 import ExamDisciplineFilter from "@/types/ExamDiscipline/ExamDisciplineFilter";
 import FilterSection from "@/components/FilterSection";
@@ -46,12 +34,9 @@ let cachedLecturers: string[] | null = null;
 let cachedCabinets: string[] | null = null;
 let cachedEventFormTypes: string[] | null = null;
 
-//FIXME: Сделать возможность изменения даты проведения экзамена
-//FIXME: Поправить компонент 
 export default function ExamsPage() {
 	const [exams, setExams] = useState<ExamDisciplinesPromise>();
 	const [lecturers, setLecturers] = useState<LecturersPromise>();
-  const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
 	const [page, setPage] = useState(1);
 	
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -94,32 +79,6 @@ const filteredExams = useMemo(() => {
     return sortedExams.slice(start, end);
   }, [sortedExams, page]);
 
-  const [selectedItem, setSelectedItem] = useState<ExamDisciplineDTO | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (item: ExamDisciplineDTO) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const {
-    register: registerCreate,
-    handleSubmit: handleSubmitCreate,
-		reset: resetCreate,
-		watch: watchCreate,
-		setValue: setValueCreate,
-    formState: { errors: errorsCreate },
-  } = useForm<ExamDisciplineDTO>({ mode: "onChange", defaultValues: { disciplineName: "", eventDatetime: "", lecturerId: "", cabinetRoomName: "", eventFormType: "" } });
-
-  const {
-    register: registerUpdate,
-    handleSubmit: handleSubmitUpdate,
-		reset: resetUpdate,
-		watch: watchUpdate,
-    setValue: setValueUpdate,
-    formState: { errors: errorsUpdate },
-	} = useForm<ExamDisciplineDTO>({ mode: "onChange", defaultValues: { disciplineName: "", eventDatetime: "", lecturerId: "", cabinetRoomName: "", eventFormType: "" } });
-	
 	const {
 		register: registerFilter,
 		handleSubmit: handleSubmitFilter,
@@ -129,79 +88,11 @@ const filteredExams = useMemo(() => {
 		formState: { errors: errorsFilter },
 	} = useForm<ExamDisciplineFilter>({ mode: "onChange", defaultValues: { dateStart: "", dateEnd: "", examType: "" } })
 
-  const [id, setId] = useState("");
 
   if (exams) {
     pages = Math.ceil(sortedExams.length / rowsPerPage);
   }
 
-	const handleSubmitBtn = handleSubmitCreate(async (data) => {
-		const lecturerId = data.lecturerId;
-		const surname = lecturerId.split(" ")[0];
-		const firstname = lecturerId.split(" ")[1];
-		const patronymic = lecturerId.split(" ")[2]; 
-
-		const firstLecturerWithSameName = lecturers?.$values.find((lecturer) => lecturer.surname === surname && lecturer.firstname === firstname && lecturer.patronymic === patronymic);
-		if (firstLecturerWithSameName) {
-			data.lecturerId = firstLecturerWithSameName.id;
-		}
-		console.log("create", data);
-
-    try {
-      const response = await createExamDiscipline(data);
-      console.log(response);
-      if (response.success === true) {
-				const data = await getExamDisciplines();
-				data?.$values.forEach((item) => {
-				item.lecturer.fio = `${item.lecturer.surname} ${item.lecturer.firstname} ${item.lecturer.patronymic}`;
-			})
-        setExams(data);
-        resetCreate();
-        setIsCreatedSuccess(true);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  });
-
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await deleteExamDiscipline(id);
-      console.log(response);
-      if (response.success === true) {
-				const data = await getExamDisciplines();
-				data?.$values.forEach((item) => {
-				item.lecturer.fio = `${item.lecturer.surname} ${item.lecturer.firstname} ${item.lecturer.patronymic}`;
-			})
-        setExams(data);
-      } else {
-        alert(response.message);
-      }
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-
-	const handleUpdate = handleSubmitUpdate(async (data: ExamDisciplineDTO) => {
-		console.log("update", id, data);
-
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-		// 		setLecturers(data);
-		// 		setIsModalOpen(false);
-		// 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
-  });
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -236,49 +127,6 @@ const filteredExams = useMemo(() => {
 		{ key: "eventFormType", label: "Type", sortable: true },
 		{ key: "actions", label: "Actions", sortable: false },
 	];
-
-	const getLecturersData = async (): Promise<string[]> => {
-		if (cachedLecturers) {
-			return cachedLecturers;
-		}
-
-		const lecturers: string[] = [];
-		const response: LecturersPromise = await getLecturers();
-		for (const lecturer of response.$values) {
-			const lecturerFIO = `${lecturer.surname} ${lecturer.firstname} ${lecturer.patronymic}`;
-			lecturers.push(lecturerFIO);
-		}
-		cachedLecturers = lecturers;
-		return lecturers;
-	}
-
-	const getDisciplinesData = async (): Promise<string[]> => {
-		if (cachedDisciplines) {
-			return cachedDisciplines;
-		}
-
-		const disciplines: string[] = [];
-		const response: DisciplinesPromise = await getDisciplines();
-		for (const discipline of response.$values) {
-			disciplines.push(discipline.name);
-		}
-		cachedDisciplines = disciplines;
-		return disciplines;
-	}
-
-	const getCabinetsData = async (): Promise<string[]> => {
-		if (cachedCabinets) {
-			return cachedCabinets;
-		}
-
-		const cabinets: string[] = [];
-		const response: CabinetsPromise = await getCabinets();
-		for (const cabinet of response.$values) {
-			cabinets.push(cabinet.roomName);
-		}
-		cachedCabinets = cabinets;
-		return cabinets;
-	}
 
 	const getEventFormTypesData = async (): Promise<string[]> => {
 		if (cachedEventFormTypes) {
