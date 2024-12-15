@@ -23,7 +23,7 @@ export default function AccountModal() {
   return (
     <>
       <Button isIconOnly variant="light" onPress={onOpen}>
-        <MdOutlineAccountCircle className="text-3xl text-white" />
+        <MdOutlineAccountCircle className="text-3xl text-white contrast-200" />
       </Button>
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>

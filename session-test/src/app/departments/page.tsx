@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { TiArrowBackOutline, TiArrowDownThick, TiArrowUpThick } from "react-icons/ti";
 import LoadingSection from "@/components/LoadingSection";
 import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
-import sortData from "../../functions/sortData";
+import sortData from "@/functions/sortData";
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<DepartmentsPromise>();
@@ -88,7 +88,7 @@ export default function DepartmentsPage() {
 	};
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#00A878] via-[#007EA7] to-[#003459] text-white p-4">
       <div className="container mx-auto">
         <h1 className="text-4xl font-extrabold text-center mb-2 text-white drop-shadow-md">
           Departments

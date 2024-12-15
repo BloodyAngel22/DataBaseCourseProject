@@ -1,7 +1,6 @@
 "use client";
 
 import CardTable from "@/components/CardTable";
-import { FcDepartment } from "react-icons/fc";
 import { GiTeacher } from "react-icons/gi";
 import { GrGroup } from "react-icons/gr";
 import { MdOutlinePlayLesson } from "react-icons/md";
@@ -10,6 +9,7 @@ import { SiGoogleclassroom } from "react-icons/si";
 import { PiExam } from "react-icons/pi";
 import { GrScorecard } from "react-icons/gr";
 import { GrDocumentTest } from "react-icons/gr";
+import { MdOutlineHomeWork } from "react-icons/md";
 import AccountSection from "@/components/AccountSection";
 import { FiLogOut } from "react-icons/fi";
 import { Button } from "@nextui-org/react";
@@ -32,11 +32,11 @@ export default function Home() {
           <FiLogOut className="text-xl text-white"/>
         </Button>
       </AccountSection>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 animate-gradient bg-[length:300%_300%] p-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#00A878] via-[#007EA7] to-[#003459] animate-gradient bg-[length:300%_300%] p-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-[1200px]">
           <CardTable
             name="Departments"
-            icon={<FcDepartment />}
+            icon={<MdOutlineHomeWork />}
             description="Кафедры университета"
             href="/authenticated/departments"
           />

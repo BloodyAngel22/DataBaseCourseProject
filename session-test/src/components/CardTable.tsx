@@ -27,7 +27,7 @@ export default function CardTable({
 }: CardTableProps) {
   return (
     <Card className="max-w-[300px] bg-white shadow-lg transition-shadow rounded-lg overflow-hidden border border-gray-200 hover:scale-105">
-      <CardHeader className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+      <CardHeader className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#00B894] to-[#007EA7] text-white">
         <div className="text-3xl">{icon}</div>
         <div>
           <h4 className="font-bold text-xl">{name}</h4>

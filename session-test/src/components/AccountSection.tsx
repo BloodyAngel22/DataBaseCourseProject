@@ -2,7 +2,6 @@
 
 import { Divider, Navbar, NavbarBrand, NavbarContent } from "@nextui-org/react";
 import Image from "next/image";
-import ModalAccount from "./Modal/ModalAccount";
 
 interface AccountSectionProps {
 	children: React.ReactNode
@@ -11,7 +10,7 @@ interface AccountSectionProps {
 export default function AccountSection({ children }: AccountSectionProps) {
 	return (
     <>
-      <div className="bg-slate-500 text-white">
+      <div className="bg-gradient-to-r from-[#00A878] to-[#007EA7] text-white shadow-md">
         <Navbar>
           <NavbarBrand className="flex gap-3">
             <Image
