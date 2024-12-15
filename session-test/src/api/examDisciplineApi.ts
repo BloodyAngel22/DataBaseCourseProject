@@ -53,6 +53,7 @@ export async function createExamDiscipline(data: ExamDisciplineDTO): Promise<{ s
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -71,7 +72,8 @@ export async function createExamDiscipline(data: ExamDisciplineDTO): Promise<{ s
 export async function deleteExamDiscipline(id: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -91,6 +93,7 @@ export async function updateExamDiscipline(id: string, data: ExamDisciplineDTO):
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

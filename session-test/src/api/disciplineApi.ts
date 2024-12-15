@@ -35,6 +35,7 @@ export async function createDiscipline(data: DisciplineDTO): Promise<{ success: 
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -53,7 +54,8 @@ export async function createDiscipline(data: DisciplineDTO): Promise<{ success: 
 export async function deleteDiscipline(id: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -73,6 +75,7 @@ export async function updateDiscipline(id: string, data: DisciplineDTO): Promise
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

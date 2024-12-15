@@ -35,6 +35,7 @@ export async function createDepartment(data: DepartmentDTO): Promise<{ success: 
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -52,7 +53,8 @@ export async function createDepartment(data: DepartmentDTO): Promise<{ success: 
 export async function deleteDepartment(id: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -72,6 +74,7 @@ export async function updateDepartment(id: string, data: DepartmentDTO): Promise
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

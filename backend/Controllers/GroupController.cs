@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using backend.Models;
 using System.Data;
 using Npgsql;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -47,6 +48,7 @@ namespace backend.Controllers
 
         // PUT: api/Group/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutGroup(string id, GroupDTO @group)
         {
@@ -97,6 +99,7 @@ namespace backend.Controllers
 
         // POST: api/Group
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPost]
         public async Task<ActionResult<Group>> PostGroup(GroupDTO @group)
         {
@@ -135,6 +138,7 @@ namespace backend.Controllers
         }
 
         // DELETE: api/Group/5
+		[Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGroup(string id)
         {

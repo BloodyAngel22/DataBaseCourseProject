@@ -342,40 +342,6 @@ export default function MarksPage() {
           >
             Go to home
           </Button>
-          <ModalCreate
-            reset={resetCreate}
-            name="mark"
-            onSubmit={handleSubmitBtn}
-            loading={false}
-            error={null}
-            setIsCreatedSuccess={setIsCreatedSuccess}
-            isCreatedSuccess={isCreatedSuccess}
-          >
-            <FormSelect
-              label="Mark"
-              data={getMarksData()}
-              name="mark1"
-              register={registerCreate}
-              errors={errorsCreate}
-							required
-            />
-            <FormSelect
-              label="Student"
-              data={getStudentsData()}
-              name="studentId"
-              register={registerCreate}
-              errors={errorsCreate}
-							required
-            />
-            <FormSelect
-              label="Statement"
-              data={getStatementsData()}
-              name="statementId"
-              register={registerCreate}
-              errors={errorsCreate}
-							required
-            />
-          </ModalCreate>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -442,29 +408,6 @@ export default function MarksPage() {
                           header="Mark details"
                           fetchData2={getMark}
                         />
-                        <Tooltip content="Update details">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="secondary"
-                            onPress={() => {
-                              openModal(item);
-                              setId(item.studentId);
-                              setId2(item.statementId);
-                            }}
-                            variant="shadow"
-                            className="scale-85"
-                            startContent={<FiEdit3 className="text-lg" />}
-                          />
-                        </Tooltip>
-
-                        <ModalDelete
-                          title="Delete mark"
-                          content="Delete mark"
-                          id={item.studentId}
-                          id2={item.statementId}
-                          handleDelete2={handleDelete}
-                        />
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
@@ -477,53 +420,6 @@ export default function MarksPage() {
             </TableBody>
           </Table>
 
-          <ModalUpdate
-            name="mark"
-            reset={resetUpdate}
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              resetUpdate();
-            }}
-            onSubmit={handleUpdate}
-            isUpdatedSuccess={isCreatedSuccess}
-            setIsUpdatedSuccess={setIsCreatedSuccess}
-          >
-            <FormSelect
-              label="Mark"
-              data={getMarksData()}
-              name="mark1"
-              register={registerCreate}
-              errors={errorsCreate}
-              setValue={() => {
-                setValueUpdate("mark1", selectedItem?.mark1 || "");
-              }}
-							required
-
-            />
-            <FormSelect
-              label="Student"
-              data={getStudentsData()}
-              name="studentId"
-              register={registerCreate}
-              errors={errorsCreate}
-              setValue={() => {
-                setValueUpdate("studentId", selectedItem?.studentId || "");
-              }}
-							required
-            />
-            <FormSelect
-              label="Statement"
-              data={getStatementsData()}
-              name="statementId"
-              register={registerCreate}
-              errors={errorsCreate}
-              setValue={() => {
-                setValueUpdate("statementId", selectedItem?.statementId || "");
-              }}
-							required
-            />
-          </ModalUpdate>
         </div>
       </div>
     </div>

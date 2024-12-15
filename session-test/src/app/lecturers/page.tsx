@@ -232,60 +232,6 @@ export default function LecturersPage() {
           >
             Go to home
           </Button>
-          <ModalCreate
-            reset={resetCreate}
-            name="lecturer"
-            onSubmit={handleSubmitBtn}
-            loading={false}
-            error={null}
-            setIsCreatedSuccess={setIsCreatedSuccess}
-            isCreatedSuccess={isCreatedSuccess}
-          >
-            <FormInput
-              name="firstname"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-              label="First Name"
-							required
-            />
-            <FormInput
-              name="surname"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-              label="Last Name"
-							required
-            />
-            <FormInput
-              name="patronymic"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-              label="Patronymic"
-							required
-            />
-            <FormDateOnly
-              name="birthdate"
-              label="Birthdate"
-              register={registerCreate}
-              errors={errorsCreate}
-              watch={watchCreate}
-              setValue={setValueCreate}
-							required
-            />
-            <FormSelect
-              label="Department"
-              data={getDepartmentsData()}
-              name="departmentName"
-              register={registerCreate}
-              errors={errorsCreate}
-							required
-            />
-          </ModalCreate>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -347,27 +293,6 @@ export default function LecturersPage() {
                           header="Lecturer details"
                           fetchData={getLecturer}
                         />
-                        <Tooltip content="Update details">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="secondary"
-                            onPress={() => {
-                              openModal(item);
-                              setId(item.id);
-                            }}
-                            variant="shadow"
-                            className="scale-85"
-                            startContent={<FiEdit3 className="text-lg" />}
-                          />
-                        </Tooltip>
-
-                        <ModalDelete
-                          title="Delete lecturer"
-                          content="Delete lecturer"
-                          id={item.id}
-                          handleDelete={handleDelete}
-                        />
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
@@ -380,82 +305,6 @@ export default function LecturersPage() {
             </TableBody>
           </Table>
 
-          <ModalUpdate
-            name="lecturer"
-            reset={resetUpdate}
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              resetUpdate();
-            }}
-            onSubmit={handleUpdate}
-            isUpdatedSuccess={isCreatedSuccess}
-            setIsUpdatedSuccess={setIsCreatedSuccess}
-          >
-            <FormInput
-              name="firstname"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="First Name"
-              setValue={() => {
-                setValueUpdate("firstname", selectedItem?.firstname || "");
-              }}
-							required
-            />
-            <FormInput
-              name="surname"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="Last Name"
-              setValue={() => {
-                setValueUpdate("surname", selectedItem?.surname || "");
-              }}
-							required
-            />
-            <FormInput
-              name="patronymic"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="Patronymic"
-              setValue={() => {
-                setValueUpdate("patronymic", selectedItem?.patronymic || "");
-              }}
-							required
-            />
-            <FormDateOnly
-              name="birthdate"
-              label="Birthdate"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              watch={watchUpdate}
-              setValue={() =>
-                setValueUpdate("birthdate", selectedItem?.birthdate || "")
-              }
-              value={selectedItem?.birthdate}
-							required
-            />
-            <FormSelect
-              label="Department"
-              data={getDepartmentsData()}
-              name="departmentName"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              defaultSelectedValue={selectedItem?.departmentName}
-              setValue={() =>
-                setValueUpdate(
-                  "departmentName",
-                  selectedItem?.departmentName || "ww"
-                )
-              }
-							required
-            />
-          </ModalUpdate>
         </div>
       </div>
     </div>

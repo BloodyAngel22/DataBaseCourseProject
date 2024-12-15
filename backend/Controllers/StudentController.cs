@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography.Xml;
 using backend.Filters;
 using backend.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -50,6 +51,7 @@ namespace backend.Controllers
 		//TODO: Сделать обновление данных студента
         // PUT: api/Student/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutStudent(Guid id, Student student)
         {
@@ -80,6 +82,7 @@ namespace backend.Controllers
 
         // POST: api/Student
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPost]
         public async Task<ActionResult<Student>> PostStudent(StudentDto student)
         {
@@ -101,6 +104,7 @@ namespace backend.Controllers
         }
 
         // DELETE: api/Student/5
+		[Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudent(Guid id)
         {

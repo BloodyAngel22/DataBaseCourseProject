@@ -35,6 +35,7 @@ export async function createMark(data: MarkDTO): Promise<{ success: boolean, mes
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -52,7 +53,8 @@ export async function createMark(data: MarkDTO): Promise<{ success: boolean, mes
 export async function deleteMark(studentId: string, statementId: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${studentId}/${statementId}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -72,6 +74,7 @@ export async function updateMark(id: string, data: MarkDTO): Promise<{ success: 
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

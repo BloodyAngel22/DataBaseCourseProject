@@ -11,7 +11,8 @@ interface FormInputProps {
   max?: number;
   type: string;
   required?: boolean;
-  setValue?: any;
+	setValue?: any;
+	regex?: RegExp;
 }
 
 export default function FormInput({
@@ -25,16 +26,21 @@ export default function FormInput({
   label,
   required,
   setValue,
+	regex,
 }: FormInputProps) {
   return (
     <>
       <Input
-        isClearable
+        // isClearable
         type={type}
         label={label ? label : name}
         errorMessage={errors[name]?.message}
-        {...register(name, {
-          required: required ? `${name} is required` : undefined,
+				{...register(name, {
+					pattern: {
+						value: regex ?? /^\S+$/,
+						message: `${name} is invalid`,
+					},
+					required: required ? `${name} is required` : undefined,
           maxLength: {
             value: maxLength ? maxLength : 100,
             message: `${name} must be less than ${
@@ -48,7 +54,7 @@ export default function FormInput({
           max: {
             value: max ? max : 100,
             message: `${name} must be less than ${max ? max : 100}`,
-          },
+					},
         })}
         isInvalid={!!errors[name]?.message}
         value={setValue ? setValue(name) : undefined}

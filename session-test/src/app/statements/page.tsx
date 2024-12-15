@@ -345,44 +345,6 @@ export default function StatementsPage() {
 							/>
 						</FilterSection>
 
-            <ModalCreate
-              reset={resetCreate}
-              name="statement"
-              onSubmit={handleSubmitBtn}
-              loading={false}
-              error={null}
-              setIsCreatedSuccess={setIsCreatedSuccess}
-              isCreatedSuccess={isCreatedSuccess}
-            >
-              <FormSelect
-                label="Exam Discipline"
-                data={getExamDisciplinesData()}
-                name="examDisciplineId"
-                register={registerCreate}
-                errors={errorsCreate}
-                required
-              />
-              <FormInput
-                name="sessionYear"
-                register={registerCreate}
-                errors={errorsCreate}
-                label="Session Year"
-                type="number"
-                min={1900}
-                max={2100}
-                required
-              />
-              <FormDateOnly
-                name="dateIssued"
-                label="Date Issued"
-                register={registerCreate}
-                errors={errorsCreate}
-                watch={watchCreate}
-                setValue={setValueCreate}
-                maxDate={new Date("2100-01-01")}
-                required
-              />
-            </ModalCreate>
           </div>
         </div>
 
@@ -445,27 +407,6 @@ export default function StatementsPage() {
                           header="Statement details"
                           fetchData={getStatement}
                         />
-                        <Tooltip content="Update details">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="secondary"
-                            onPress={() => {
-                              openModal(item);
-                              setId(item.id);
-                            }}
-                            variant="shadow"
-                            className="scale-85"
-                            startContent={<FiEdit3 className="text-lg" />}
-                          />
-                        </Tooltip>
-
-                        <ModalDelete
-                          title="Delete statement"
-                          content="Delete statement"
-                          id={item.id}
-                          handleDelete={handleDelete}
-                        />
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
@@ -479,59 +420,6 @@ export default function StatementsPage() {
             </TableBody>
           </Table>
 
-          <ModalUpdate
-            name="statement"
-            reset={resetUpdate}
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              resetUpdate();
-            }}
-            onSubmit={handleUpdate}
-            isUpdatedSuccess={isCreatedSuccess}
-            setIsUpdatedSuccess={setIsCreatedSuccess}
-          >
-            <FormSelect
-              label="Exam Discipline"
-              data={getExamDisciplinesData()}
-              name="examDisciplineId"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              defaultSelectedValue={selectedItem?.examDisciplineId}
-              setValue={() =>
-                setValueUpdate(
-                  "examDisciplineId",
-                  selectedItem?.examDisciplineId || ""
-                )
-              }
-              required
-            />
-            <FormInput
-              name="sessionYear"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              label="Session Year"
-              type="number"
-              min={1900}
-              max={2100}
-              setValue={() =>
-                setValueUpdate("sessionYear", selectedItem?.sessionYear || 0)
-              }
-              required
-            />
-            <FormDateOnly
-              name="dateIssued"
-              label="Date Issued"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              watch={watchUpdate}
-              setValue={() =>
-                setValueUpdate("dateIssued", selectedItem?.dateIssued || "")
-              }
-              value={selectedItem?.dateIssued}
-              required
-            />
-          </ModalUpdate>
         </div>
       </div>
     </div>

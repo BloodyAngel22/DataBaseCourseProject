@@ -35,6 +35,7 @@ export async function createGroup(data: GroupDTO): Promise<{ success: boolean, m
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -53,7 +54,8 @@ export async function createGroup(data: GroupDTO): Promise<{ success: boolean, m
 export async function deleteGroup(id: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -73,6 +75,7 @@ export async function updateGroup(id: string, data: GroupDTO): Promise<{ success
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

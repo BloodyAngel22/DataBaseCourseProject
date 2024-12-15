@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -43,6 +44,7 @@ namespace backend.Controllers
 
         // PUT: api/Lecturer/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLecturer(Guid id, Lecturer lecturer)
         {
@@ -74,6 +76,7 @@ namespace backend.Controllers
 
         // POST: api/Lecturer
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPost]
         public async Task<ActionResult<Lecturer>> PostLecturer(LecturerDTO lecturer)
         {
@@ -118,6 +121,7 @@ namespace backend.Controllers
         }
 
         // DELETE: api/Lecturer/5
+		[Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLecturer(Guid id)
         {

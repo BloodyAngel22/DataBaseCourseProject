@@ -398,58 +398,6 @@ const filteredExams = useMemo(() => {
 							/>
 						</FilterSection>						
 
-            <ModalCreate
-              reset={resetCreate}
-              name="exam"
-              onSubmit={handleSubmitBtn}
-              loading={false}
-              error={null}
-              setIsCreatedSuccess={setIsCreatedSuccess}
-              isCreatedSuccess={isCreatedSuccess}
-            >
-              <FormSelect
-                label="Discipline"
-                data={getDisciplinesData()}
-                name="disciplineName"
-                register={registerCreate}
-                errors={errorsCreate}
-                required
-              />
-              <FormDateTime
-                name="eventDateTime"
-                register={registerCreate}
-                errors={errorsCreate}
-                watch={watchCreate}
-                setValue={setValueCreate}
-                maxDate={new Date("2030-01-01")}
-                label="Event date and time"
-                required
-              />
-              <FormSelect
-                label="Lecturer"
-                data={getLecturersData()}
-                name="lecturerId"
-                register={registerCreate}
-                errors={errorsCreate}
-                required
-              />
-              <FormSelect
-                label="Room"
-                data={getCabinetsData()}
-                name="cabinetRoomName"
-                register={registerCreate}
-                errors={errorsCreate}
-                required
-              />
-              <FormSelect
-                label="Type"
-                data={getEventFormTypesData()}
-                name="eventFormType"
-                register={registerCreate}
-                errors={errorsCreate}
-                required
-              />
-            </ModalCreate>
           </div>
         </div>
 
@@ -516,27 +464,6 @@ const filteredExams = useMemo(() => {
                           header="Exam details"
                           fetchData={getExamDiscipline}
                         />
-                        <Tooltip content="Update details">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="secondary"
-                            onPress={() => {
-                              openModal(item);
-                              setId(item.id);
-                            }}
-                            variant="shadow"
-                            className="scale-85"
-                            startContent={<FiEdit3 className="text-lg" />}
-                          />
-                        </Tooltip>
-
-                        <ModalDelete
-                          title="Delete exam"
-                          content="Delete exam"
-                          id={item.id}
-                          handleDelete={handleDelete}
-                        />
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
@@ -549,61 +476,6 @@ const filteredExams = useMemo(() => {
             </TableBody>
           </Table>
 
-          <ModalUpdate
-            name="exam"
-            reset={resetUpdate}
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              resetUpdate();
-            }}
-            onSubmit={handleUpdate}
-            isUpdatedSuccess={isCreatedSuccess}
-            setIsUpdatedSuccess={setIsCreatedSuccess}
-          >
-            <FormInput
-              name="disciplineName"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="Discipline Name"
-              setValue={() => {
-                setValueUpdate(
-                  "disciplineName",
-                  selectedItem?.disciplineName || ""
-                );
-              }}
-              required
-            />
-            <FormDateTime
-              name="eventDatetime"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              watch={watchUpdate}
-              setValue={() =>
-                setValueUpdate(
-                  "eventDatetime",
-                  selectedItem?.eventDatetime || ""
-                )
-              }
-              value={selectedItem?.eventDatetime}
-              required
-            />
-            <FormSelect
-              label="Lecturer"
-              data={getLecturersData()}
-              name="lecturerId"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              defaultSelectedValue={selectedItem?.lecturerId}
-              setValue={() =>
-                setValueUpdate("lecturerId", selectedItem?.lecturerId || "")
-              }
-              required
-            />
-            {/* //TODO: добавить cabinet и event_form_type */}
-          </ModalUpdate>
         </div>
       </div>
     </div>

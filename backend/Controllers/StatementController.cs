@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using backend.Models;
 using backend.Filters;
 using backend.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -66,6 +67,7 @@ namespace backend.Controllers
 
         // PUT: api/Statement/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutStatement(Guid id, Statement statement)
         {
@@ -97,6 +99,7 @@ namespace backend.Controllers
 
 		// POST: api/Statement
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
 		[HttpPost]
 		public async Task<ActionResult<Statement>> PostStatement(StatementDTO statement)
 		{
@@ -140,6 +143,7 @@ namespace backend.Controllers
         }
 
         // DELETE: api/Statement/5
+		[Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStatement(Guid id)
         {

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -49,6 +50,7 @@ namespace backend.Controllers
 
 		// PUT: api/Department/5
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
 		[HttpPut("{id}")]
 		public async Task<IActionResult> PutDepartment(string id, Department department)
 		{
@@ -68,6 +70,7 @@ namespace backend.Controllers
 
 		// POST: api/Department
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
 		[HttpPost]
 		public async Task<ActionResult<Department>> PostDepartment(Department department)
 		{
@@ -93,6 +96,7 @@ namespace backend.Controllers
 		}
 
 		// DELETE: api/Department/5
+		[Authorize]
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> DeleteDepartment(string id)
 		{

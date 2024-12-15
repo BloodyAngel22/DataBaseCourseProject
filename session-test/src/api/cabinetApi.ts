@@ -35,6 +35,7 @@ export async function createCabinet(data: CabinetDTO): Promise<{ success: boolea
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -52,7 +53,8 @@ export async function createCabinet(data: CabinetDTO): Promise<{ success: boolea
 export async function deleteCabinet(id: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -72,6 +74,7 @@ export async function updateCabinet(id: string, data: CabinetDTO): Promise<{ suc
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

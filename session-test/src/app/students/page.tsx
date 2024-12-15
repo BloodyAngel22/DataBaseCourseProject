@@ -313,70 +313,6 @@ export default function StudentsPage() {
 							/>
 						</FilterSection>
 
-            <ModalCreate
-              reset={resetCreate}
-              name="student"
-              onSubmit={handleSubmitBtn}
-              loading={false}
-              error={null}
-              setIsCreatedSuccess={setIsCreatedSuccess}
-              isCreatedSuccess={isCreatedSuccess}
-            >
-              <FormInput
-                name="firstname"
-                register={registerCreate}
-                errors={errorsCreate}
-                maxLength={100}
-                type="text"
-                label="First Name"
-							required
-              />
-              <FormInput
-                name="surname"
-                register={registerCreate}
-                errors={errorsCreate}
-                maxLength={100}
-                type="text"
-                label="Last Name"
-							required
-              />
-              <FormInput
-                name="patronymic"
-                register={registerCreate}
-                errors={errorsCreate}
-                maxLength={100}
-                type="text"
-                label="Patronymic"
-							required
-              />
-              <FormInput
-                name="course"
-                register={registerCreate}
-                errors={errorsCreate}
-                type="number"
-                label="Course"
-                min={1}
-                max={5}
-							required
-              />
-              <FormDateOnly
-                name="birthdate"
-                label="Birthdate"
-                register={registerCreate}
-                errors={errorsCreate}
-                watch={watchCreate}
-                setValue={setValueCreate}
-                required
-              />
-              <FormSelect
-                label="Group"
-                data={getGroupsData()}
-                name="groupName"
-                register={registerCreate}
-                errors={errorsCreate}
-							required
-              />
-            </ModalCreate>
           </div>
         </div>
 
@@ -439,27 +375,6 @@ export default function StudentsPage() {
                           header="Student details"
                           fetchData={getStudent}
                         />
-                        <Tooltip content="Update details">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="secondary"
-                            onPress={() => {
-                              openModal(item);
-                              setId(item.id);
-                            }}
-                            variant="shadow"
-                            className="scale-85"
-                            startContent={<FiEdit3 className="text-lg" />}
-                          />
-                        </Tooltip>
-
-                        <ModalDelete
-                          title="Delete student"
-                          content="Delete student"
-                          id={item.id}
-                          handleDelete={handleDelete}
-                        />
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
@@ -472,92 +387,6 @@ export default function StudentsPage() {
             </TableBody>
           </Table>
 
-          <ModalUpdate
-            name="student"
-            reset={resetUpdate}
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              resetUpdate();
-            }}
-            onSubmit={handleUpdate}
-            isUpdatedSuccess={isCreatedSuccess}
-            setIsUpdatedSuccess={setIsCreatedSuccess}
-          >
-            <FormInput
-              name="firstname"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="First Name"
-              setValue={() => {
-                setValueUpdate("firstname", selectedItem?.firstname || "");
-              }}
-                required
-            />
-            <FormInput
-              name="surname"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="Last Name"
-              setValue={() => {
-                setValueUpdate("surname", selectedItem?.surname || "");
-              }}
-                required
-            />
-            <FormInput
-              name="patronymic"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="Patronymic"
-              setValue={() => {
-                setValueUpdate("patronymic", selectedItem?.patronymic || "");
-              }}
-                required
-            />
-            <FormInput
-              name="course"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              type="number"
-              label="Course"
-              min={1}
-              max={5}
-              setValue={() => {
-                setValueUpdate("course", selectedItem?.course || 0);
-              }}
-                required
-            />
-            <FormDateOnly
-              name="birthdate"
-              label="Birthdate"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              watch={watchUpdate}
-              setValue={() =>
-                setValueUpdate("birthdate", selectedItem?.birthdate || "")
-              }
-              value={selectedItem?.birthdate}
-                required
-            />
-            <FormSelect
-              label="Group"
-              data={getGroupsData()}
-              name="groupName"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              defaultSelectedValue={selectedItem?.groupName}
-              setValue={() =>
-                setValueUpdate("groupName", selectedItem?.groupName || "ww")
-              }
-                required
-            />
-          </ModalUpdate>
         </div>
       </div>
     </div>

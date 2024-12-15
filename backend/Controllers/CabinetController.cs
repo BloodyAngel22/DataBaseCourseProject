@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -43,6 +44,7 @@ namespace backend.Controllers
 
         // PUT: api/Cabinet/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCabinet(string id, Cabinet cabinet)
         {
@@ -59,6 +61,7 @@ namespace backend.Controllers
 
         // POST: api/Cabinet
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPost]
         public async Task<ActionResult<Cabinet>> PostCabinet(Cabinet cabinet)
         {
@@ -83,6 +86,7 @@ namespace backend.Controllers
         }
 
         // DELETE: api/Cabinet/5
+		[Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCabinet(string id)
         {

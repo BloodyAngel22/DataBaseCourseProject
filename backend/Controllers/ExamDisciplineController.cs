@@ -9,6 +9,7 @@ using backend.Models;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using backend.Extensions;
 using backend.Filters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -68,6 +69,7 @@ namespace backend.Controllers
 
         // PUT: api/ExamDiscipline/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutExamDiscipline(Guid id, ExamDiscipline examDiscipline)
         {
@@ -100,6 +102,7 @@ namespace backend.Controllers
 
         // POST: api/ExamDiscipline
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPost]
         public async Task<ActionResult<ExamDiscipline>> PostExamDiscipline(ExamDisciplineDto examDiscipline)
         {
@@ -140,6 +143,7 @@ namespace backend.Controllers
         }
 
         // DELETE: api/ExamDiscipline/5
+		[Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExamDiscipline(Guid id)
         {

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -65,6 +66,7 @@ namespace backend.Controllers
 
         // PUT: api/Mark/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutMark(Guid id, Mark mark)
         {
@@ -98,6 +100,7 @@ namespace backend.Controllers
 
         // POST: api/Mark
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
         [HttpPost]
         public async Task<ActionResult<Mark>> PostMark(MarkDto mark)
         {
@@ -138,6 +141,7 @@ namespace backend.Controllers
         }
 
 		// DELETE: api/Mark/5/7
+		[Authorize]
 		[HttpDelete("{studentId}/{statementId}")]
 		public async Task<IActionResult> DeleteMark(Guid studentId, Guid statementId)
 		{

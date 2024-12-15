@@ -53,6 +53,7 @@ export async function createStudent(data: StudentDTO): Promise<{ success: boolea
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -71,7 +72,8 @@ export async function createStudent(data: StudentDTO): Promise<{ success: boolea
 export async function deleteStudent(id: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -91,6 +93,7 @@ export async function updateStudent(id: string, data: StudentDTO): Promise<{ suc
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

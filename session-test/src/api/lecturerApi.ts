@@ -35,6 +35,7 @@ export async function createLecturer(data: LecturerDTO): Promise<{ success: bool
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -53,7 +54,8 @@ export async function createLecturer(data: LecturerDTO): Promise<{ success: bool
 export async function deleteLecturer(id: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -73,6 +75,7 @@ export async function updateLecturer(id: string, data: LecturerDTO): Promise<{ s
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

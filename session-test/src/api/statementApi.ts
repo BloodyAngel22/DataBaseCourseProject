@@ -53,6 +53,7 @@ export async function createStatement(data: StatementDTO): Promise<{ success: bo
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 
@@ -70,7 +71,8 @@ export async function createStatement(data: StatementDTO): Promise<{ success: bo
 export async function deleteStatement(id: string): Promise<{ success: boolean, message: string }> {
 	try {
 		const res = await fetch(`${url}/${id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
+			credentials: 'include'
 		});
 
 		if (!res.ok) {
@@ -90,6 +92,7 @@ export async function updateStatement(id: string, data: StatementDTO): Promise<{
 			headers: {
 				'Content-Type': 'application/json'
 			},
+			credentials: 'include',
 			body: JSON.stringify(data)
 		});
 

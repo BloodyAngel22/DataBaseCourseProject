@@ -203,33 +203,6 @@ export default function GroupsPage() {
           >
             Go to home
           </Button>
-          <ModalCreate
-            reset={resetCreate}
-            name="group"
-            onSubmit={handleSubmitBtn}
-            loading={false}
-            error={null}
-            setIsCreatedSuccess={setIsCreatedSuccess}
-            isCreatedSuccess={isCreatedSuccess}
-          >
-            <FormInput
-              name="name"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-              label="Name"
-							required
-            />
-            <FormSelect
-              label="Department"
-              data={getDepartmentsData()}
-              name="departmentName"
-              register={registerCreate}
-              errors={errorsCreate}
-							required
-            />
-          </ModalCreate>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -291,27 +264,6 @@ export default function GroupsPage() {
                           header="Group details"
                           fetchData={getGroup}
                         />
-                        <Tooltip content="Update details">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="secondary"
-                            onPress={() => {
-                              openModal(item);
-                              setId(item.name);
-                            }}
-                            variant="shadow"
-                            className="scale-85"
-                            startContent={<FiEdit3 className="text-lg" />}
-                          />
-                        </Tooltip>
-
-                        <ModalDelete
-                          title="Delete group"
-                          content="Delete group"
-                          id={item.name}
-                          handleDelete={handleDelete}
-                        />
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
@@ -324,46 +276,6 @@ export default function GroupsPage() {
             </TableBody>
           </Table>
 
-          <ModalUpdate
-            name="group"
-            reset={resetUpdate}
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              resetUpdate();
-            }}
-            onSubmit={handleUpdate}
-            isUpdatedSuccess={isCreatedSuccess}
-            setIsUpdatedSuccess={setIsCreatedSuccess}
-          >
-            <FormInput
-              name="name"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="Name"
-              setValue={() => {
-                setValueUpdate("name", selectedItem?.name || "");
-              }}
-							required
-            />
-            <FormSelect
-              label="Department"
-              data={getDepartmentsData()}
-              name="departmentName"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              defaultSelectedValue={selectedItem?.departmentName}
-              setValue={() =>
-                setValueUpdate(
-                  "departmentName",
-                  selectedItem?.departmentName || "ww"
-                )
-              }
-							required
-            />
-          </ModalUpdate>
         </div>
       </div>
     </div>

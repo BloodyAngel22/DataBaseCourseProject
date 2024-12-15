@@ -191,25 +191,6 @@ export default function CabinetsPage() {
           >
             Go to home
           </Button>
-          <ModalCreate
-            reset={resetCreate}
-            name="cabinet"
-            onSubmit={handleSubmitBtn}
-            loading={false}
-            error={null}
-            setIsCreatedSuccess={setIsCreatedSuccess}
-            isCreatedSuccess={isCreatedSuccess}
-          >
-            <FormInput
-              name="roomName"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-							label="Name"
-							required
-            />
-          </ModalCreate>
         </div>
 
 				<div className="bg-white rounded-lg shadow overflow-hidden">
@@ -260,24 +241,6 @@ export default function CabinetsPage() {
                           header="Cabinet details"
                           fetchData={getCabinet}
 												/>
-												<Tooltip content="Update details">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          color="secondary"
-													onPress={() => { openModal(item); setId(item.roomName); }}
-                          variant="shadow"
-                          className="scale-85"
-                          startContent={<FiEdit3 className="text-lg" />}
-													/>
-												</Tooltip>
-
-                        <ModalDelete
-                          title="Delete cabinet"
-                          content="Delete cabinet"
-                          id={item.roomName}
-                          handleDelete={handleDelete}
-                        />
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
@@ -290,31 +253,6 @@ export default function CabinetsPage() {
             </TableBody>
           </Table>
 
-          <ModalUpdate
-            name="cabinet"
-            reset={resetUpdate}
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              resetUpdate();
-            }}
-						onSubmit={handleUpdate}
-						isUpdatedSuccess={isCreatedSuccess}
-						setIsUpdatedSuccess={setIsCreatedSuccess}
-          >
-            <FormInput
-              name="roomName"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-							type="text"
-							label="Name"
-              setValue={() => {
-                setValueUpdate("roomName", selectedItem?.roomName || "");
-              }}
-							required
-            />
-          </ModalUpdate>
         </div>
       </div>
     </div>

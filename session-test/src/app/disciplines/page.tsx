@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  createDepartment,
-  deleteDepartment,
-  getDepartment,
-  getDepartments,
-	updateDepartment,
-} from "@/api/departmentApi";
 import ModalDetail from "@/components/Modal/ModalDetail";
 import {
   Table,
@@ -200,25 +193,6 @@ export default function DisciplinesPage() {
           >
             Go to home
           </Button>
-          <ModalCreate
-            reset={resetCreate}
-            name="discipline"
-            onSubmit={handleSubmitBtn}
-            loading={false}
-            error={null}
-            setIsCreatedSuccess={setIsCreatedSuccess}
-            isCreatedSuccess={isCreatedSuccess}
-          >
-            <FormInput
-              name="name"
-              register={registerCreate}
-              errors={errorsCreate}
-              maxLength={100}
-              type="text"
-              label="Name"
-							required
-            />
-          </ModalCreate>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -280,27 +254,6 @@ export default function DisciplinesPage() {
                           header="Discipline details"
                           fetchData={getDiscipline}
                         />
-                        <Tooltip content="Update details">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            color="secondary"
-                            onPress={() => {
-                              openModal(item);
-                              setId(item.name);
-                            }}
-                            variant="shadow"
-                            className="scale-85"
-                            startContent={<FiEdit3 className="text-lg" />}
-                          />
-                        </Tooltip>
-
-                        <ModalDelete
-                          title="Delete discipline"
-                          content="Delete discipline"
-                          id={item.name}
-                          handleDelete={handleDelete}
-                        />
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
@@ -313,31 +266,6 @@ export default function DisciplinesPage() {
             </TableBody>
           </Table>
 
-          <ModalUpdate
-            name="discipline"
-            reset={resetUpdate}
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              resetUpdate();
-            }}
-            onSubmit={handleUpdate}
-            isUpdatedSuccess={isCreatedSuccess}
-            setIsUpdatedSuccess={setIsCreatedSuccess}
-          >
-            <FormInput
-              name="name"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
-              label="Name"
-              setValue={() => {
-                setValueUpdate("name", selectedItem?.name || "");
-              }}
-							required
-            />
-          </ModalUpdate>
         </div>
       </div>
     </div>
