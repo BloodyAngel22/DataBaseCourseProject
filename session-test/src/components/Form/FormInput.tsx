@@ -37,7 +37,7 @@ export default function FormInput({
         errorMessage={errors[name]?.message}
 				{...register(name, {
 					pattern: {
-						value: regex ?? /^\S+$/,
+						value: regex ?? /^(?!\s*$)[\w\dА-Яа-яёЁ-]+(?:\s[\w\dА-Яа-яёЁ-]+)*$/,
 						message: `${name} is invalid`,
 					},
 					required: required ? `${name} is required` : undefined,

@@ -213,7 +213,6 @@ export default function StudentsPage() {
 								label="Date Start"
 								register={registerFilter}
 								errors={errorsFilter}
-								watch={watchFilter}
 								setValue={setValueFilter}
 							/>
 							<FormDateOnly
@@ -221,7 +220,6 @@ export default function StudentsPage() {
 								label="Date End"
 								register={registerFilter}
 								errors={errorsFilter}
-								watch={watchFilter}
 								setValue={setValueFilter}
 							/>
 						</FilterSection>
@@ -277,7 +275,7 @@ export default function StudentsPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent="No data">
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) =>

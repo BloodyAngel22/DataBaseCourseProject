@@ -194,7 +194,6 @@ export default function StatementsPage() {
 								errors={errorsFilter}
 								label="Event Date Time Start"
 								setValue={setValueFilter}
-								watch={watchFilter}
 								maxDate={new Date("2030-01-01")}
 							/>
 							<FormDateTime
@@ -203,7 +202,6 @@ export default function StatementsPage() {
 								errors={errorsFilter}
 								label="Event Date Time End"
 								setValue={setValueFilter}
-								watch={watchFilter}
 								maxDate={new Date("2030-01-01")}
 							/>
 							<FormDateOnly
@@ -212,7 +210,6 @@ export default function StatementsPage() {
 								register={registerFilter}
 								errors={errorsFilter}
 								setValue={setValueFilter}
-								watch={watchFilter}
 								maxDate={new Date("2030-01-01")}
 							/>
 							<FormDateOnly
@@ -221,7 +218,6 @@ export default function StatementsPage() {
 								register={registerFilter}
 								errors={errorsFilter}
 								setValue={setValueFilter}
-								watch={watchFilter}
 								maxDate={new Date("2030-01-01")}
 							/>
 						</FilterSection>
@@ -277,7 +273,7 @@ export default function StatementsPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent="No data">
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) =>
@@ -291,7 +287,6 @@ export default function StatementsPage() {
                       </TableCell>
                     ) : (
                       <TableCell className="py-3 px-2">
-                        {/* {getKeyValue(item, columnKey)} */}
                         {renderCell(item, columnKey as string)}
                       </TableCell>
                     )

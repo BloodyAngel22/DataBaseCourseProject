@@ -67,31 +67,41 @@ namespace backend.Controllers
         // PUT: api/Mark/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 		[Authorize]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutMark(Guid id, Mark mark)
+        [HttpPut("{studentId}/{statementId}")]
+        public async Task<IActionResult> PutMark(Guid studentId, Guid statementId, MarkDto mark)
         {
-            if (id != mark.StudentId)
-            {
-                return BadRequest();
-            }
+			try
+			{
+				var existMark = await _context.Marks.Include(x => x.Statement).Include(x => x.Student).FirstOrDefaultAsync(x => x.StudentId == studentId && x.StatementId == statementId);
+				if (existMark == null) return NotFound(new { message = "Mark not found" });
 
-            _context.Entry(mark).State = EntityState.Modified;
+				if (!string.IsNullOrEmpty(mark.Mark1))
+				{
+					existMark.Mark1 = mark.Mark1;
+				}
 
-            try
-            {
+				if (!string.IsNullOrEmpty(mark.StatementId))
+				{
+					existMark.StatementId = new Guid(mark.StatementId);
+					existMark.Statement = await _context.Statements.Include(x => x.ExamDiscipline).FirstOrDefaultAsync(x => x.Id == existMark.StatementId) ?? throw new Exception("Statement not found");
+				}
+
+				if (!string.IsNullOrEmpty(mark.StudentId))
+				{
+					existMark.StudentId = new Guid(mark.StudentId);
+					existMark.Student = await _context.Students.FirstOrDefaultAsync(x => x.Id == existMark.StudentId) ?? throw new Exception("Student not found");
+				}
+
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                if (!MarkExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+				return BadRequest(new { message = ex.Message });
             }
+			catch (Exception ex)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
 
             return NoContent();
         }

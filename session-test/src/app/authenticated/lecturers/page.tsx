@@ -18,7 +18,7 @@ import {
 	Input,
 } from "@nextui-org/react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ModalCreate from "@/components/Modal/ModalCreate";
 import { useForm } from "react-hook-form";
 import FormInput from "@/components/Form/FormInput";
@@ -31,7 +31,7 @@ import FormSelect from "@/components/Form/FormSelect";
 import DepartmentsPromise from "@/types/Department/DepartmentsPromise";
 import LecturersPromise from "@/types/Lecturer/LecturersPromise";
 import LecturerDTO from "@/types/Lecturer/LecturerDTO";
-import { createLecturer, deleteLecturer, getLecturer, getLecturers } from "@/api/lecturerApi";
+import { createLecturer, deleteLecturer, getLecturer, getLecturers, updateLecturer } from "@/api/lecturerApi";
 import FormDateOnly from "@/components/Form/FormDateOnly";
 import sortData from "@/functions/sortData";
 
@@ -153,20 +153,20 @@ export default function LecturersPage() {
 	const handleUpdate = handleSubmitUpdate(async (data: LecturerDTO) => {
 		console.log("update", id, data);
 
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-		// 		setLecturers(data);
-		// 		setIsModalOpen(false);
-		// 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
+    try {
+      const response = await updateLecturer(id, data);
+      console.log(response);
+      if (response.success === true) {
+        const data = await getLecturers();
+				setLecturers(data);
+				setIsModalOpen(false);
+				setSelectedItem(null);
+      } else {
+        alert(response.message);
+      }
+    } catch (error) {
+      alert((error as Error).message);
+    }
   });
 
   useEffect(() => {
@@ -175,7 +175,14 @@ export default function LecturersPage() {
       setLecturers(data);
     };
 		fetchLecturers();
-  }, [setLecturers]);
+	}, [setLecturers, getLecturers]);
+	
+	// const memoizedSetValue = useCallback(
+	// 	(key: string, value: string) => {
+	// 		setValueUpdate(key, value);
+	// 	},
+	// 	[setValueUpdate]
+	// );
 
   if (!lecturers) {
     return <LoadingSection />;
@@ -212,8 +219,8 @@ export default function LecturersPage() {
 			setSortColumn(key);
 			setSortDirection("asc");
 		}
-	};
-
+		};
+	
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#00A878] via-[#007EA7] to-[#003459] text-white p-4">
       <div className="container mx-auto">
@@ -273,7 +280,6 @@ export default function LecturersPage() {
               label="Birthdate"
               register={registerCreate}
               errors={errorsCreate}
-              watch={watchCreate}
               setValue={setValueCreate}
 							required
             />
@@ -336,7 +342,7 @@ export default function LecturersPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent={"No data"}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) =>
@@ -433,11 +439,8 @@ export default function LecturersPage() {
               label="Birthdate"
               register={registerUpdate}
               errors={errorsUpdate}
-              watch={watchUpdate}
-              setValue={() =>
-                setValueUpdate("birthdate", selectedItem?.birthdate || "")
-              }
-              value={selectedItem?.birthdate}
+              setValue={setValueUpdate}
+              value={selectedItem?.birthdate || ""}
 							required
             />
             <FormSelect

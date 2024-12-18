@@ -27,15 +27,16 @@ import FormSelect from "@/components/Form/FormSelect";
 import FormDateOnly from "@/components/Form/FormDateOnly";
 import StatementsPromise from "@/types/Statement/StatementsPromise";
 import StatementDTO from "@/types/Statement/StatementDTO";
-import { createStatement, deleteStatement, getFilteredStatements, getStatement, getStatements } from "@/api/statementApi";
+import { createStatement, deleteStatement, getFilteredStatements, getStatement, getStatements, updateStatement } from "@/api/statementApi";
 import ExamDisciplinesPromise from "@/types/ExamDiscipline/ExamDisciplinesPromise";
 import { getExamDisciplines } from "@/api/examDisciplineApi";
 import sortData from "@/functions/sortData";
 import StatementFilter from "@/types/Statement/StatementFilter";
 import FilterSection from "@/components/FilterSection";
 import FormDateTime from "@/components/Form/FormDateTime";
+import FormSelectFK from "@/components/Form/FormSelectFK";
 
-let cachedExamDisciplines: string[] | null = null;
+let cachedExamDisciplines: {id: string; label: string}[] | null = null;
 
 export default function StatementsPage() {
 	const [statements, setStatements] = useState<StatementsPromise>();
@@ -168,22 +169,29 @@ export default function StatementsPage() {
   };
 
 	const handleUpdate = handleSubmitUpdate(async (data: StatementDTO) => {
+		const examDisciplineId = data.examDisciplineId;
+		const { examDiscipline, date } = getExamDisciplineByNameDate(examDisciplineId);
+		examDisciplines?.$values?.forEach((item) => {
+			if (item.disciplineName === examDiscipline && item.eventDatetime === date) {
+				data.examDisciplineId = item.id;
+			}	
+		})
 		console.log("update", id, data);
 
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-		// 		setLecturers(data);
-		// 		setIsModalOpen(false);
-		// 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
+    try {
+      const response = await updateStatement(id, data);
+      console.log(response);
+      if (response.success === true) {
+        const data = await getStatements();
+				setStatements(data);
+				setIsModalOpen(false);
+				setSelectedItem(null);
+      } else {
+        alert(response.message);
+      }
+    } catch (error) {
+      alert((error as Error).message);
+    }
   });
 
   useEffect(() => {
@@ -221,19 +229,24 @@ export default function StatementsPage() {
 		return { examDiscipline, date };
 	}
 	
-	const getExamDisciplinesData = async (): Promise<string[]> => {
+	const getExamDisciplinesData = async (): Promise<{id: string; label: string}[]> => {
 		if (cachedExamDisciplines) {
 			return cachedExamDisciplines;
 		}
 
-		const examDisciplines: string[] = [];
+		const examDisciplines: {id: string; label: string}[] = [];
 		const response: ExamDisciplinesPromise = await getExamDisciplines();
 		for (const examDiscipline of response.$values) {
 			const value = `${examDiscipline.disciplineName} (${examDiscipline.eventDatetime})`;
-			examDisciplines.push(value);
+			examDisciplines.push({id: examDiscipline.id, label: value});
 		}
 		cachedExamDisciplines = examDisciplines;
 		return examDisciplines;
+	}
+
+	const getExamDisciplineDataById = (id: string): string => {
+		const examDiscipline = examDisciplines.$values.find((item) => item.id === id);
+		return `${examDiscipline?.disciplineName} (${examDiscipline?.eventDatetime})`;
 	}
 
 	const renderCell = (data : any, columnKey : string) => {
@@ -313,7 +326,6 @@ export default function StatementsPage() {
 								errors={errorsFilter}
 								label="Event Date Time Start"
 								setValue={setValueFilter}
-								watch={watchFilter}
 								maxDate={new Date("2030-01-01")}
 							/>
 							<FormDateTime
@@ -322,7 +334,6 @@ export default function StatementsPage() {
 								errors={errorsFilter}
 								label="Event Date Time End"
 								setValue={setValueFilter}
-								watch={watchFilter}
 								maxDate={new Date("2030-01-01")}
 							/>
 							<FormDateOnly
@@ -331,7 +342,6 @@ export default function StatementsPage() {
 								register={registerFilter}
 								errors={errorsFilter}
 								setValue={setValueFilter}
-								watch={watchFilter}
 								maxDate={new Date("2030-01-01")}
 							/>
 							<FormDateOnly
@@ -340,7 +350,6 @@ export default function StatementsPage() {
 								register={registerFilter}
 								errors={errorsFilter}
 								setValue={setValueFilter}
-								watch={watchFilter}
 								maxDate={new Date("2030-01-01")}
 							/>
 						</FilterSection>
@@ -377,7 +386,6 @@ export default function StatementsPage() {
                 label="Date Issued"
                 register={registerCreate}
                 errors={errorsCreate}
-                watch={watchCreate}
                 setValue={setValueCreate}
                 maxDate={new Date("2100-01-01")}
                 required
@@ -434,7 +442,7 @@ export default function StatementsPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent={"No data"}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) =>
@@ -450,9 +458,16 @@ export default function StatementsPage() {
                             isIconOnly
                             size="sm"
                             color="secondary"
-                            onPress={() => {
+                            onPress={async () => {
                               openModal(item);
-                              setId(item.id);
+															setId(item.id);
+															
+															setValueUpdate("dateIssued", item.dateIssued);
+
+															setSelectedItem({
+																...item,
+																examDisciplineId: getExamDisciplineDataById(item.examDisciplineId)
+															})
                             }}
                             variant="shadow"
                             className="scale-85"
@@ -491,18 +506,15 @@ export default function StatementsPage() {
             isUpdatedSuccess={isCreatedSuccess}
             setIsUpdatedSuccess={setIsCreatedSuccess}
           >
-            <FormSelect
+            <FormSelectFK
               label="Exam Discipline"
               data={getExamDisciplinesData()}
               name="examDisciplineId"
               register={registerUpdate}
               errors={errorsUpdate}
               defaultSelectedValue={selectedItem?.examDisciplineId}
-              setValue={() =>
-                setValueUpdate(
-                  "examDisciplineId",
-                  selectedItem?.examDisciplineId || ""
-                )
+              setValue={(value) =>
+                setValueUpdate("examDisciplineId", value || "")
               }
               required
             />
@@ -524,11 +536,9 @@ export default function StatementsPage() {
               label="Date Issued"
               register={registerUpdate}
               errors={errorsUpdate}
-              watch={watchUpdate}
-              setValue={() =>
-                setValueUpdate("dateIssued", selectedItem?.dateIssued || "")
-              }
+              setValue={setValueUpdate}
               value={selectedItem?.dateIssued}
+              maxDate={new Date("2100-01-01T00:00:00.000Z")}
               required
             />
           </ModalUpdate>

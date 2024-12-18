@@ -280,7 +280,7 @@ export default function GroupsPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent={"No data"}>
               {(item) => (
                 <TableRow key={item.name}>
                   {(columnKey) =>

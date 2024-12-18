@@ -213,7 +213,7 @@ export default function MarksPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent={"No data"}>
               {(item) => (
                 <TableRow key={item.$id}>
                   {(columnKey) =>

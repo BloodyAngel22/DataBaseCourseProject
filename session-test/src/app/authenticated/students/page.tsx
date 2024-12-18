@@ -30,7 +30,7 @@ import GroupsPromise from "@/types/Group/GroupsPromise";
 import FormDateOnly from "@/components/Form/FormDateOnly";
 import StudentsPromise from "@/types/Student/StudentsPromise";
 import StudentDTO from "@/types/Student/StudentDTO";
-import { createStudent, deleteStudent, getFilteredStudents, getStudent, getStudents } from "@/api/studentApi";
+import { createStudent, deleteStudent, getFilteredStudents, getStudent, getStudents, updateStudent } from "@/api/studentApi";
 import sortData from "@/functions/sortData";
 import FilterSection from "@/components/FilterSection";
 import StudentFilter from "@/types/Student/StudentFilter";
@@ -162,20 +162,20 @@ export default function StudentsPage() {
 	const handleUpdate = handleSubmitUpdate(async (data: StudentDTO) => {
 		console.log("update", id, data);
 
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-		// 		setLecturers(data);
-		// 		setIsModalOpen(false);
-		// 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
+    try {
+      const response = await updateStudent(id, data);
+      console.log(response);
+      if (response.success === true) {
+        const data = await getStudents();
+				setStudents(data);
+				setIsModalOpen(false);
+				setSelectedItem(null);
+      } else {
+        alert(response.message);
+      }
+    } catch (error) {
+      alert((error as Error).message);
+		}
   });
 
   useEffect(() => {
@@ -300,7 +300,6 @@ export default function StudentsPage() {
 								label="Date Start"
 								register={registerFilter}
 								errors={errorsFilter}
-								watch={watchFilter}
 								setValue={setValueFilter}
 							/>
 							<FormDateOnly
@@ -308,7 +307,6 @@ export default function StudentsPage() {
 								label="Date End"
 								register={registerFilter}
 								errors={errorsFilter}
-								watch={watchFilter}
 								setValue={setValueFilter}
 							/>
 						</FilterSection>
@@ -364,7 +362,6 @@ export default function StudentsPage() {
                 label="Birthdate"
                 register={registerCreate}
                 errors={errorsCreate}
-                watch={watchCreate}
                 setValue={setValueCreate}
                 required
               />
@@ -428,7 +425,7 @@ export default function StudentsPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent="No data">
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) =>
@@ -491,9 +488,9 @@ export default function StudentsPage() {
               maxLength={100}
               type="text"
               label="First Name"
-              setValue={() => {
-                setValueUpdate("firstname", selectedItem?.firstname || "");
-              }}
+							setValue={() => {
+								setValueUpdate("firstname", selectedItem?.firstname || "");
+							}}
                 required
             />
             <FormInput
@@ -538,11 +535,8 @@ export default function StudentsPage() {
               label="Birthdate"
               register={registerUpdate}
               errors={errorsUpdate}
-              watch={watchUpdate}
-              setValue={() =>
-                setValueUpdate("birthdate", selectedItem?.birthdate || "")
-              }
-              value={selectedItem?.birthdate}
+							setValue={setValueUpdate}
+							value={selectedItem?.birthdate || ""}
                 required
             />
             <FormSelect

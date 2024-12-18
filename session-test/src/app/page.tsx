@@ -1,5 +1,4 @@
 import CardTable from "@/components/CardTable";
-import { FcDepartment } from "react-icons/fc";
 import { GiTeacher } from "react-icons/gi";
 import { GrGroup } from "react-icons/gr";
 import { MdOutlinePlayLesson } from "react-icons/md";

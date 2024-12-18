@@ -26,10 +26,10 @@ import ModalUpdate from "@/components/Modal/ModalUpdate";
 import { FiEdit3 } from "react-icons/fi";
 import FormSelect from "@/components/Form/FormSelect";
 import LecturersPromise from "@/types/Lecturer/LecturersPromise";
-import { getLecturers } from "@/api/lecturerApi";
+import { getLecturers, updateLecturer } from "@/api/lecturerApi";
 import ExamDisciplinesPromise from "@/types/ExamDiscipline/ExamDisciplinesPromise";
 import ExamDisciplineDTO from "@/types/ExamDiscipline/ExamDisciplineDTO";
-import { createExamDiscipline, deleteExamDiscipline, getExamDiscipline, getExamDisciplines, getFilteredExamDisciplines } from "@/api/examDisciplineApi";
+import { createExamDiscipline, deleteExamDiscipline, getExamDiscipline, getExamDisciplines, getFilteredExamDisciplines, updateExamDiscipline } from "@/api/examDisciplineApi";
 import FormDateTime from "@/components/Form/FormDateTime";
 import CabinetsPromise from "@/types/Cabinet/CabinetsPromise";
 import { getCabinets } from "@/api/cabinetApi";
@@ -40,14 +40,13 @@ import { getDisciplines } from "@/api/disciplineApi";
 import sortData from "@/functions/sortData";
 import ExamDisciplineFilter from "@/types/ExamDiscipline/ExamDisciplineFilter";
 import FilterSection from "@/components/FilterSection";
+import FormSelectFK from "@/components/Form/FormSelectFK";
 
 let cachedDisciplines: string[] | null = null;
-let cachedLecturers: string[] | null = null;
+let cachedLecturers: {id: string; label: string}[] | null = null;
 let cachedCabinets: string[] | null = null;
 let cachedEventFormTypes: string[] | null = null;
 
-//FIXME: Сделать возможность изменения даты проведения экзамена
-//FIXME: Поправить компонент 
 export default function ExamsPage() {
 	const [exams, setExams] = useState<ExamDisciplinesPromise>();
 	const [lecturers, setLecturers] = useState<LecturersPromise>();
@@ -185,22 +184,34 @@ const filteredExams = useMemo(() => {
   };
 
 	const handleUpdate = handleSubmitUpdate(async (data: ExamDisciplineDTO) => {
+
+		const { firstName, surname, patronymic } = getFirstnameSurnamePatronymic(data.lecturerId);
+		const lecturer = lecturers?.$values.find((lecturer) => lecturer.surname === surname && lecturer.firstname === firstName && lecturer.patronymic === patronymic);
+		if (lecturer) {
+			data.lecturerId = lecturer.id;
+		} else {
+			alert("Lecturer not found");
+			return;
+		}
 		console.log("update", id, data);
 
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-		// 		setLecturers(data);
-		// 		setIsModalOpen(false);
-		// 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
+    try {
+      const response = await updateExamDiscipline(id, data);
+      console.log(response);
+      if (response.success === true) {
+        const data = await getExamDisciplines();
+				data?.$values.forEach((item) => {
+				item.lecturer.fio = `${item.lecturer.surname} ${item.lecturer.firstname} ${item.lecturer.patronymic}`;
+			})
+        setExams(data);
+				setIsModalOpen(false);
+				setSelectedItem(null);
+      } else {
+        alert(response.message);
+      }
+    } catch (error) {
+      alert((error as Error).message);
+    }
   });
 
   useEffect(() => {
@@ -237,16 +248,24 @@ const filteredExams = useMemo(() => {
 		{ key: "actions", label: "Actions", sortable: false },
 	];
 
-	const getLecturersData = async (): Promise<string[]> => {
+	const getFirstnameSurnamePatronymic = (fio: string) => {
+		const firstName = fio.split(" ")[1];
+		const surname = fio.split(" ")[0];
+		const patronymic = fio.split(" ")[2];
+
+		return { firstName, surname, patronymic };
+	}
+
+	const getLecturersData = async (): Promise<{ id: string; label: string }[]> => {
 		if (cachedLecturers) {
 			return cachedLecturers;
 		}
 
-		const lecturers: string[] = [];
+		const lecturers: { id: string; label: string }[] = [];
 		const response: LecturersPromise = await getLecturers();
 		for (const lecturer of response.$values) {
 			const lecturerFIO = `${lecturer.surname} ${lecturer.firstname} ${lecturer.patronymic}`;
-			lecturers.push(lecturerFIO);
+			lecturers.push({ id: lecturer.id, label: lecturerFIO });
 		}
 		cachedLecturers = lecturers;
 		return lecturers;
@@ -382,7 +401,6 @@ const filteredExams = useMemo(() => {
 								name="dateStart"
 								register={registerFilter}
 								errors={errorsFilter}
-								watch={watchFilter}
 								setValue={setValueFilter}
 								label="Start date"
 								maxDate={new Date("2030-01-01")}
@@ -391,7 +409,6 @@ const filteredExams = useMemo(() => {
 								name="dateEnd"
 								register={registerFilter}
 								errors={errorsFilter}
-								watch={watchFilter}
 								setValue={setValueFilter}
 								label="End date"
 								maxDate={new Date("2030-01-01")}
@@ -419,7 +436,6 @@ const filteredExams = useMemo(() => {
                 name="eventDateTime"
                 register={registerCreate}
                 errors={errorsCreate}
-                watch={watchCreate}
                 setValue={setValueCreate}
                 maxDate={new Date("2030-01-01")}
                 label="Event date and time"
@@ -501,7 +517,7 @@ const filteredExams = useMemo(() => {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent={"No data"}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) =>
@@ -523,7 +539,14 @@ const filteredExams = useMemo(() => {
                             color="secondary"
                             onPress={() => {
                               openModal(item);
-                              setId(item.id);
+															setId(item.id);
+															
+															setValueUpdate("lecturerId", item.lecturer.fio);
+
+															setSelectedItem({
+																...item,
+																lecturerId: getFIOLecturerById(item.lecturerId)
+															})
                             }}
                             variant="shadow"
                             className="scale-85"
@@ -561,12 +584,12 @@ const filteredExams = useMemo(() => {
             isUpdatedSuccess={isCreatedSuccess}
             setIsUpdatedSuccess={setIsCreatedSuccess}
           >
-            <FormInput
+            <FormSelect
               name="disciplineName"
               register={registerUpdate}
-              errors={errorsUpdate}
-              maxLength={100}
-              type="text"
+							errors={errorsUpdate}
+							data={getDisciplinesData()}
+							defaultSelectedValue={selectedItem?.disciplineName}
               label="Discipline Name"
               setValue={() => {
                 setValueUpdate(
@@ -580,29 +603,56 @@ const filteredExams = useMemo(() => {
               name="eventDatetime"
               register={registerUpdate}
               errors={errorsUpdate}
-              watch={watchUpdate}
-              setValue={() =>
-                setValueUpdate(
-                  "eventDatetime",
-                  selectedItem?.eventDatetime || ""
-                )
-              }
-              value={selectedItem?.eventDatetime}
+              setValue={setValueUpdate}
+							value={selectedItem?.eventDatetime}
+							maxDate={new Date("2100-01-01")}
               required
             />
-            <FormSelect
+            <FormSelectFK
               label="Lecturer"
               data={getLecturersData()}
-              name="lecturerId"
-              register={registerUpdate}
-              errors={errorsUpdate}
-              defaultSelectedValue={selectedItem?.lecturerId}
-              setValue={() =>
-                setValueUpdate("lecturerId", selectedItem?.lecturerId || "")
-              }
+							register={registerUpdate}
+							name="lecturerId"
+							errors={errorsUpdate}
+							defaultSelectedValue={selectedItem?.lecturerId}
+							setValue={(value) => {
+								setValueUpdate(
+									"lecturerId",
+									value
+								);
+							}}
               required
-            />
-            {/* //TODO: добавить cabinet и event_form_type */}
+						/>
+						<FormSelect
+							label="Cabinet"
+							data={getCabinetsData()}
+							name="cabinetRoomName"
+							register={registerUpdate}
+							errors={errorsUpdate}
+							setValue={() => {
+								setValueUpdate(
+									"cabinetRoomName",
+									selectedItem?.cabinetRoomName|| ""
+								);
+							}}
+							defaultSelectedValue={selectedItem?.cabinetRoomName}
+							required
+						/>
+						<FormSelect
+							label="Event Form Type"
+							data={getEventFormTypesData()}
+							name="eventFormType"
+							register={registerUpdate}
+							errors={errorsUpdate}
+							setValue={() => {
+								setValueUpdate(
+									"eventFormType",
+									selectedItem?.eventFormType || ""
+								);
+							}}
+							defaultSelectedValue={selectedItem?.eventFormType}
+							required
+						/>
           </ModalUpdate>
         </div>
       </div>

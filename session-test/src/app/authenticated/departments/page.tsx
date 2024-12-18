@@ -257,7 +257,7 @@ export default function DepartmentsPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={paginatedDepartments}>
+            <TableBody items={paginatedDepartments} emptyContent="No data">
               {(item) => (
                 <TableRow key={item.name}>
                   {(columnKey) =>

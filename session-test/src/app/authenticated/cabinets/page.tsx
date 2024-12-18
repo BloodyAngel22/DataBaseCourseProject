@@ -204,7 +204,8 @@ export default function CabinetsPage() {
               name="roomName"
               register={registerCreate}
               errors={errorsCreate}
-              maxLength={100}
+							maxLength={100}
+							max={Infinity}
               type="text"
 							label="Name"
 							required
@@ -249,7 +250,7 @@ export default function CabinetsPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent={"No data"}>
               {(item) => (
                 <TableRow key={item.roomName}>
                   {(columnKey) =>

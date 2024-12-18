@@ -69,29 +69,44 @@ namespace backend.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 		[Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutStatement(Guid id, Statement statement)
+        public async Task<IActionResult> PutStatement(Guid id, StatementDTO statement)
         {
-			var existingStatement = await _context.Statements.FindAsync(id);
+			var existingStatement = await _context.Statements.Include(x => x.ExamDiscipline).FirstOrDefaultAsync(x => x.Id == id);
 
 			if (existingStatement == null) return NotFound(new { message = "Statement not found" });
 
-            _context.Entry(statement).State = EntityState.Modified;
-
             try
             {
+				if (!string.IsNullOrEmpty(statement.ExamDisciplineId))
+				{
+					existingStatement.ExamDisciplineId = Guid.Parse(statement.ExamDisciplineId); 
+				}
+				if (!string.IsNullOrEmpty(statement.SessionYear))
+				{
+					existingStatement.SessionYear = short.Parse(statement.SessionYear);
+				}
+				if (!string.IsNullOrEmpty(statement.DateIssued))
+				{
+					existingStatement.DateIssued = DateOnly.Parse(statement.DateIssued);
+				}
+
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
                 if (!StatementExists(id))
                 {
-                    return NotFound();
+                    return NotFound(ex.Message);
                 }
                 else
                 {
-                    throw;
+					return Conflict(ex.Message);
                 }
             }
+			catch (Exception ex)
+			{
+				return Conflict(ex.Message);
+			}
 
             return NoContent();
         }

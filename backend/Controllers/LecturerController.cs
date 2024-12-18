@@ -46,26 +46,36 @@ namespace backend.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 		[Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLecturer(Guid id, Lecturer lecturer)
+        public async Task<IActionResult> PutLecturer(Guid id, LecturerDTO lecturer)
         {
-			var existingLecturer = await _context.Lecturers.FindAsync(id);
+			var existingLecturer = await _context.Lecturers.Include(l => l.DepartmentNameNavigation).FirstOrDefaultAsync(l => l.Id == id);
 
 			if (existingLecturer == null) return NotFound(new { message = "Lecturer not found" });
 
             try
             {
-				_context.Entry(lecturer).State = EntityState.Modified;
+				if (!string.IsNullOrEmpty(lecturer.firstname)) existingLecturer.Firstname = lecturer.firstname;
+				if (!string.IsNullOrEmpty(lecturer.surname)) existingLecturer.Surname = lecturer.surname;
+				if (!string.IsNullOrEmpty(lecturer.patronymic)) existingLecturer.Patronymic = lecturer.patronymic;
+				if (!string.IsNullOrEmpty(lecturer.birthdate.ToString())) existingLecturer.Birthdate = DateOnly.Parse(lecturer.birthdate);
+				if (!string.IsNullOrEmpty(lecturer.departmentName))
+				{
+					existingLecturer.DepartmentName = lecturer.departmentName;
+
+					existingLecturer.DepartmentNameNavigation = await _context.Departments.FirstOrDefaultAsync(d => d.Name == lecturer.departmentName) ?? throw new Exception("Invalid department name");
+				}
+
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
                 if (!LecturerExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { message = ex.Message });
                 }
                 else
                 {
-                    throw;
+					return Conflict(new { message = ex.Message });
                 }
             }
 

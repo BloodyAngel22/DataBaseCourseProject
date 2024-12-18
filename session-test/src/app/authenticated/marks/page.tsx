@@ -30,7 +30,7 @@ import {
 import MarksPromise from "@/types/Mark/MarksPromise";
 import StudentsPromise from "@/types/Student/StudentsPromise";
 import MarkDTO from "@/types/Mark/MarkDTO";
-import { createMark, deleteMark, getMark, getMarks } from "@/api/markApi";
+import { createMark, deleteMark, getMark, getMarks, updateMark } from "@/api/markApi";
 import { getStudents } from "@/api/studentApi";
 import sortData from "@/functions/sortData";
 
@@ -188,23 +188,48 @@ export default function MarksPage() {
     }
   };
 
-  const handleUpdate = handleSubmitUpdate(async (data: MarkDTO) => {
-    console.log("update", id, data);
+	const handleUpdate = handleSubmitUpdate(async (data: MarkDTO) => {
+    const { firstname, surname, patronymic } = getStudentByName(data.studentId);
+    students?.$values?.forEach((item) => {
+      if (
+        item.firstname === firstname &&
+        item.surname === surname &&
+        item.patronymic === patronymic
+      ) {
+        data.studentId = item.id;
+      }
+    });
 
-    // try {
-    //   const response = await updateLecturer(id, data);
-    //   console.log(response);
-    //   if (response.success === true) {
-    //     const data = await getLecturers();
-    // 		setLecturers(data);
-    // 		setIsModalOpen(false);
-    // 		setSelectedItem(null);
-    //   } else {
-    //     alert(response.message);
-    //   }
-    // } catch (error) {
-    //   alert((error as Error).message);
-    // }
+    const { examDiscipline, date } = getExamDisciplineByNameDate(
+      data.statementId
+    );
+    statements?.$values?.forEach((item) => {
+      if (
+        item.examDiscipline.disciplineName === examDiscipline &&
+        item.examDiscipline.eventDatetime === date
+      ) {
+        data.statementId = item.id;
+      }
+    });
+    console.log("update", id, id2, data);
+
+    try {
+      const response = await updateMark(id, id2, data);
+      console.log(response);
+      if (response.success === true) {
+				const data = await getMarks();
+				data?.$values.forEach((item) => {
+          item.student.fio = `${item.student.surname} ${item.student.firstname} ${item.student.patronymic}`;
+        });
+        setMarks(data);
+        setIsModalOpen(false);
+        setSelectedItem(null);
+      } else {
+        alert(response.message);
+      }
+    } catch (error) {
+      alert((error as Error).message);
+    }
   });
 
   useEffect(() => {
@@ -248,8 +273,8 @@ export default function MarksPage() {
 	];
 	
 	const getStudentByName = (data: string): { firstname: string; surname: string; patronymic: string }=> {
-		const firstname = data.split(" ")[0];
-		const surname = data.split(" ")[1];
+		const firstname = data.split(" ")[1];
+		const surname = data.split(" ")[0];
 		const patronymic = data.split(" ")[2];
 		return { firstname, surname, patronymic };
 	}
@@ -260,7 +285,7 @@ export default function MarksPage() {
     const examDiscipline = data.split("(")[0].trim();
     const date = data.split("(")[1].split(")")[0].trim();
     return { examDiscipline, date };
-  };
+	};
 
   const getStatementsData = async (): Promise<string[]> => {
     if (cachedStatements) {
@@ -304,6 +329,14 @@ export default function MarksPage() {
 		}
 		const student = students?.$values.find((student) => student.id === id);
 		return student ? `${student?.surname} ${student?.firstname} ${student?.patronymic}` : "Unknown";
+	}
+
+	const getStatementById = (id: string) => {
+		if (!statements) {
+			return "Unknown";
+		}
+		const statement = statements?.$values.find((statement) => statement.id === id);
+		return statement ? `${statement?.examDiscipline.disciplineName} (${statement?.examDiscipline.eventDatetime})` : "Unknown";
 	}
 
   const renderCell = (data: any, columnKey: string) => {
@@ -426,7 +459,7 @@ export default function MarksPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody emptyContent={"No data"} items={items}>
               {(item) => (
                 <TableRow key={item.$id}>
                   {(columnKey) =>
@@ -450,7 +483,13 @@ export default function MarksPage() {
                             onPress={() => {
                               openModal(item);
                               setId(item.studentId);
-                              setId2(item.statementId);
+															setId2(item.statementId);
+
+															setSelectedItem({
+																...item,
+																studentId: getFIOStudentById(item.studentId),
+																statementId: getStatementById(item.statementId),
+															});
                             }}
                             variant="shadow"
                             className="scale-85"
@@ -474,7 +513,7 @@ export default function MarksPage() {
                   }
                 </TableRow>
               )}
-            </TableBody>
+						</TableBody>
           </Table>
 
           <ModalUpdate
@@ -493,34 +532,36 @@ export default function MarksPage() {
               label="Mark"
               data={getMarksData()}
               name="mark1"
-              register={registerCreate}
-              errors={errorsCreate}
+              register={registerUpdate}
+              errors={errorsUpdate}
               setValue={() => {
                 setValueUpdate("mark1", selectedItem?.mark1 || "");
-              }}
+							}}
+							defaultSelectedValue={selectedItem?.mark1}
 							required
-
             />
             <FormSelect
               label="Student"
               data={getStudentsData()}
               name="studentId"
-              register={registerCreate}
-              errors={errorsCreate}
+              register={registerUpdate}
+              errors={errorsUpdate}
               setValue={() => {
                 setValueUpdate("studentId", selectedItem?.studentId || "");
-              }}
+							}}
+							defaultSelectedValue={selectedItem?.studentId}
 							required
             />
             <FormSelect
               label="Statement"
               data={getStatementsData()}
               name="statementId"
-              register={registerCreate}
-              errors={errorsCreate}
+              register={registerUpdate}
+              errors={errorsUpdate}
               setValue={() => {
                 setValueUpdate("statementId", selectedItem?.statementId || "");
-              }}
+							}}
+							defaultSelectedValue={selectedItem?.statementId}
 							required
             />
           </ModalUpdate>

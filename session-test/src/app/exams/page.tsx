@@ -226,7 +226,6 @@ const filteredExams = useMemo(() => {
 								name="dateStart"
 								register={registerFilter}
 								errors={errorsFilter}
-								watch={watchFilter}
 								setValue={setValueFilter}
 								label="Start date"
 								maxDate={new Date("2030-01-01")}
@@ -235,7 +234,6 @@ const filteredExams = useMemo(() => {
 								name="dateEnd"
 								register={registerFilter}
 								errors={errorsFilter}
-								watch={watchFilter}
 								setValue={setValueFilter}
 								label="End date"
 								maxDate={new Date("2030-01-01")}
@@ -293,7 +291,7 @@ const filteredExams = useMemo(() => {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent={"No data"}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) =>

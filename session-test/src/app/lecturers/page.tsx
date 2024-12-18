@@ -21,9 +21,6 @@ import LecturersPromise from "@/types/Lecturer/LecturersPromise";
 import { getLecturer, getLecturers } from "@/api/lecturerApi";
 import sortData from "@/functions/sortData";
 
-let cachedDepartments: string[] | null = null;
-
-//FIXME: Сделать возможность изменения даты рождения лектора
 export default function LecturersPage() {
   const [lecturers, setLecturers] = useState<LecturersPromise>();
 	const [page, setPage] = useState(1);
@@ -80,7 +77,7 @@ export default function LecturersPage() {
       setLecturers(data);
     };
 		fetchLecturers();
-  }, [setLecturers]);
+  }, [setLecturers, getLecturers]);
 
   if (!lecturers) {
     return <LoadingSection />;
@@ -172,7 +169,7 @@ export default function LecturersPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent={"No data"}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) =>

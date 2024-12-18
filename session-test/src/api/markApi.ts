@@ -67,9 +67,9 @@ export async function deleteMark(studentId: string, statementId: string): Promis
 	}
 }
 
-export async function updateMark(id: string, data: MarkDTO): Promise<{ success: boolean, message: string }> {
+export async function updateMark(studentId: string, statementId: string, data: MarkDTO): Promise<{ success: boolean, message: string }> {
 	try {
-		const res = await fetch(`${url}/${id}`, {
+		const res = await fetch(`${url}/${studentId}/${statementId}`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json'

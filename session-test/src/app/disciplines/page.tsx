@@ -152,7 +152,7 @@ export default function DisciplinesPage() {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={items}>
+            <TableBody items={items} emptyContent="No data">
               {(item) => (
                 <TableRow key={item.name}>
                   {(columnKey) =>

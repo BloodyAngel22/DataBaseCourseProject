@@ -1,83 +1,80 @@
 import { DateInput } from "@nextui-org/react";
-import { UseFormRegister, UseFormWatch } from "react-hook-form";
+import { UseFormRegister, UseFormSetValue } from "react-hook-form";
 import { CalendarDate, parseDate } from "@internationalized/date";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 interface FormDateOnlyProps {
-	name: string;
-	label: string;
-	register: UseFormRegister<any>;
-	errors: any;
-	setValue: any;
-	watch: UseFormWatch<any>;
-	value?: any;
-	maxDate?: Date;
-	required?: boolean;
+  name: string;
+  label: string;
+  register: UseFormRegister<any>;
+  errors: any;
+  setValue: UseFormSetValue<any>;
+  value?: string;
+  maxDate?: Date;
+  required?: boolean;
 }
 
 export default function FormDateOnly({
-	name,
-	label,
-	register,
-	errors,
-	setValue,
-	watch,
-	value: initialDate,
-	maxDate,
-	required,
+  name,
+  label,
+  register,
+  errors,
+  setValue,
+  value: externalValue,
+  maxDate,
+  required,
 }: FormDateOnlyProps) {
-	const rawValue = watch(name) || initialDate;
-	const value = rawValue ? parseDate(rawValue) : null;
+  const [localValue, setLocalValue] = useState<CalendarDate | null>(
+    externalValue ? parseDate(externalValue) : null
+  );
 
-	const isDateRange = (date: CalendarDate | null): boolean => {
-		if (!date) return false;
-
-		if (date.year < 1900) return false;
-
-		const valueDate = new Date(date.year, date.month - 1, date.day);
-		const currentDate = new Date();
-
-		if (maxDate) {
-			return valueDate <= maxDate;
-		}
-
-		return valueDate <= currentDate;
-	};
+  useEffect(() => {
+    if (externalValue) {
+      const parsedDate = parseDate(externalValue);
+      if (parsedDate?.toString() !== localValue?.toString()) {
+        setLocalValue(parsedDate);
+      }
+    }
+  }, [externalValue]);
 
 	useEffect(() => {
-		register(name, {
-			validate: (value) => {
-				if (!value && !required) return true;
+  register(name, {
+    validate: (val) => {
+      if (!val && !required) return true;
 
-				if (required && !value) return "Date is required";
+      if (required && !val) return "Date is required";
 
-				try {
-					const parsedDate = value ? parseDate(value) : null;
-					if (!parsedDate) return "Invalid date format";
-					if (!isDateRange(parsedDate)) return "Date must be between 1900 and today";
-					return true;
-				} catch (error) {
-					return "Invalid date format";
-				}
-			},
-		});
-		if (initialDate) {
-			setValue(name, initialDate, { shouldValidate: true });
-		}
-	}, [name, register, required, initialDate, setValue, isDateRange]);
+      const parsedDate = val ? parseDate(val) : null;
+      const valueDate = parsedDate
+        ? new Date(parsedDate.year, parsedDate.month - 1, parsedDate.day)
+        : null;
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0); // Обнуляем время
 
-	return (
-		<>
-			<DateInput
-				hideTimeZone
-				label={label}
-				isInvalid={!!errors[name]}
-				errorMessage={errors[name]?.message}
-				value={value}
-				onChange={(value) =>
-					setValue(name, value?.toString() || "", { shouldValidate: true })
-				}
-			/>
-		</>
-	);
+      if (!parsedDate) return "Invalid date format";
+      if (parsedDate.year < 1900) return "Year must be after 1900";
+      if (maxDate && valueDate && valueDate > maxDate) return "Date exceeds max range";
+      // if (valueDate && valueDate > currentDate) return "Date cannot be in the future";
+
+      return true;
+    },
+  });
+}, [name, register, required, maxDate]);
+
+
+  const handleChange = (newValue: CalendarDate | null) => {
+    setLocalValue(newValue);
+    setValue(name, newValue?.toString() || "", { shouldValidate: true });
+  };
+
+  return (
+    <DateInput
+      hideTimeZone
+      label={label}
+      isInvalid={!!errors[name]}
+      errorMessage={errors[name]?.message}
+      value={localValue}
+      onChange={handleChange}
+    />
+  );
 }

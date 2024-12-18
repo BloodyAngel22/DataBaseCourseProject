@@ -43,7 +43,7 @@ export default function FormSelect({
       }
     };
     fetchData();
-  }, [data, defaultSelectedValue, name, setValue]);
+  }, [defaultSelectedValue]);
 
   return (
     <>

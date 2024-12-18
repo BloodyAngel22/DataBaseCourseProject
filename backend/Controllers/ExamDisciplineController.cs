@@ -71,27 +71,54 @@ namespace backend.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 		[Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutExamDiscipline(Guid id, ExamDiscipline examDiscipline)
+        public async Task<IActionResult> PutExamDiscipline(Guid id, ExamDisciplineDto examDiscipline)
         {
-			var existingExamDiscipline = await _context.ExamDisciplines.FindAsync(id);
+			var existingExamDiscipline = await _context.ExamDisciplines.Include(x => x.DisciplineNameNavigation).Include(x => x.Lecturer).Include(x => x.CabinetRoomNameNavigation).Include(x => x.EventFormTypeNavigation).FirstOrDefaultAsync(x => x.Id == id);
 
 			if (existingExamDiscipline == null) return NotFound(new { message = "ExamDiscipline not found" });
 
-            _context.Entry(examDiscipline).State = EntityState.Modified;
-
             try
             {
+				if (!string.IsNullOrEmpty(examDiscipline.DisciplineName))
+				{
+					existingExamDiscipline.DisciplineName = examDiscipline.DisciplineName;
+					existingExamDiscipline.DisciplineNameNavigation = await _context.Disciplines.FindAsync(examDiscipline.DisciplineName) ?? throw new Exception("Discipline not found");
+				}
+
+				if (!string.IsNullOrEmpty(examDiscipline.LecturerId))
+				{
+					existingExamDiscipline.LecturerId = new Guid(examDiscipline.LecturerId);
+					existingExamDiscipline.Lecturer = await _context.Lecturers.FindAsync(new Guid(examDiscipline.LecturerId)) ?? throw new Exception("Lecturer not found");
+				}
+
+				if (!string.IsNullOrEmpty(examDiscipline.CabinetRoomName))
+				{
+					existingExamDiscipline.CabinetRoomName = examDiscipline.CabinetRoomName;
+					existingExamDiscipline.CabinetRoomNameNavigation = await _context.Cabinets.FindAsync(examDiscipline.CabinetRoomName) ?? throw new Exception("CabinetRoom not found");
+				}
+
+				if (!string.IsNullOrEmpty(examDiscipline.EventFormType))
+				{
+					existingExamDiscipline.EventFormType = examDiscipline.EventFormType;
+					existingExamDiscipline.EventFormTypeNavigation = await _context.EventForms.FindAsync(examDiscipline.EventFormType) ?? throw new Exception("EventFormType not found");
+				}
+
+				if (!string.IsNullOrEmpty(examDiscipline.EventDateTime))
+				{
+					existingExamDiscipline.EventDatetime = DateTime.Parse(examDiscipline.EventDateTime);
+				}
+
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
                 if (!ExamDisciplineExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { message = ex.Message });
                 }
                 else
                 {
-                    throw;
+					return Conflict(new { message = ex.Message });
                 }
             }
 
