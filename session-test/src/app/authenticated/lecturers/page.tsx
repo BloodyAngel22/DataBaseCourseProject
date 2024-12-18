@@ -35,10 +35,9 @@ import { createLecturer, deleteLecturer, getLecturer, getLecturers, updateLectur
 import FormDateOnly from "@/components/Form/FormDateOnly";
 import sortData from "@/functions/sortData";
 
-let cachedDepartments: string[] | null = null;
 
-//FIXME: Сделать возможность изменения даты рождения лектора
 export default function LecturersPage() {
+	let cachedDepartments: string[] | null = null;
   const [lecturers, setLecturers] = useState<LecturersPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
 	const [page, setPage] = useState(1);

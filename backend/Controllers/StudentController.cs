@@ -48,7 +48,6 @@ namespace backend.Controllers
 
 		public record StudentDto(Guid id, string firstName, string surname, string patronymic, int course, string birthDate, string groupName);
 
-		//TODO: Сделать обновление данных студента
         // PUT: api/Student/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 		[Authorize]

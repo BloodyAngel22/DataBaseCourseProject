@@ -34,10 +34,10 @@ import { createMark, deleteMark, getMark, getMarks, updateMark } from "@/api/mar
 import { getStudents } from "@/api/studentApi";
 import sortData from "@/functions/sortData";
 
-let cachedStatements: string[] | null = null;
-let cachedStudents: string[] | null = null;
 
 export default function MarksPage() {
+	let cachedStatements: string[] | null = null;
+	let cachedStudents: string[] | null = null;
   const [marks, setMarks] = useState<MarksPromise>();
   const [statements, setStatements] =
 		useState<StatementsPromise>();

@@ -42,12 +42,12 @@ import ExamDisciplineFilter from "@/types/ExamDiscipline/ExamDisciplineFilter";
 import FilterSection from "@/components/FilterSection";
 import FormSelectFK from "@/components/Form/FormSelectFK";
 
-let cachedDisciplines: string[] | null = null;
-let cachedLecturers: {id: string; label: string}[] | null = null;
-let cachedCabinets: string[] | null = null;
-let cachedEventFormTypes: string[] | null = null;
 
 export default function ExamsPage() {
+	let cachedDisciplines: string[] | null = null;
+	let cachedLecturers: {id: string; label: string}[] | null = null;
+	let cachedCabinets: string[] | null = null;
+	let cachedEventFormTypes: string[] | null = null;
 	const [exams, setExams] = useState<ExamDisciplinesPromise>();
 	const [lecturers, setLecturers] = useState<LecturersPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);

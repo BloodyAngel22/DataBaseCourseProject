@@ -61,9 +61,7 @@ namespace backend.Controllers
 				return NotFound($"Department with ID {id} not found.");
 			}
 
-			var newName = department.Name;
-
-			await _context.Database.ExecuteSqlInterpolatedAsync($"Update department set name = {newName} where name = {id}");
+			await _context.UpdateDepartment(existingDepartment.Name, department.Name);
 
 			return NoContent();
 		}

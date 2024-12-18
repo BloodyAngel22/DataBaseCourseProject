@@ -35,10 +35,9 @@ import sortData from "@/functions/sortData";
 import FilterSection from "@/components/FilterSection";
 import StudentFilter from "@/types/Student/StudentFilter";
 
-let cachedGroups: string[] | null = null;
 
-//FIXME: Сделать возможность изменения даты рождения студента 
 export default function StudentsPage() {
+	let cachedGroups: string[] | null = null;
   const [students, setStudents] = useState<StudentsPromise>();
   const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);
 	const [page, setPage] = useState(1);

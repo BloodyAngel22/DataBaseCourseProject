@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace backend.Models;
 
@@ -275,4 +276,37 @@ public partial class AppDbContext(DbContextOptions<AppDbContext> options) : DbCo
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+
+	public async Task UpdateCabinet(string oldRoomName, string newRoomName)
+	{
+		var command = "CALL update_cabinet(@oldRoomName, @newRoomName)";
+		await Database.ExecuteSqlRawAsync(command, 
+			new NpgsqlParameter("oldRoomName", oldRoomName),
+			new NpgsqlParameter("newRoomName", newRoomName));
+	}
+
+	public async Task UpdateDepartment(string oldName, string newName)
+	{
+		var command = "CALL update_department_name(@oldName, @newName)";
+		await Database.ExecuteSqlRawAsync(command,
+			new NpgsqlParameter("oldName", oldName),
+			new NpgsqlParameter("newName", newName));
+	}
+
+	public async Task UpdateDiscipline(string oldName, string newName)
+	{
+		var command = "CALL update_discipline_name(@oldName, @newName)";
+		await Database.ExecuteSqlRawAsync(command,
+			new NpgsqlParameter("oldName", oldName),
+			new NpgsqlParameter("newName", newName));
+	}
+
+	public async Task UpdateGroup(string oldName, string newName, string newDepartmentName)
+	{
+		var command = "CALL update_group_details(@oldName, @newName, @newDepartmentName)";
+		await Database.ExecuteSqlRawAsync(command,
+			new NpgsqlParameter("oldName", oldName),
+			new NpgsqlParameter("newName", newName),
+			new NpgsqlParameter("newDepartmentName", newDepartmentName));
+	}
 }

@@ -52,11 +52,9 @@ namespace backend.Controllers
 
 			if (existingDiscipline == null) return NotFound(new { message = "Discipline not found" });
 
-			var newName = discipline.Name;
-
 			try
 			{
-				await _context.Database.ExecuteSqlInterpolatedAsync($"Update discipline set name = {newName} where name = {id}");
+				await _context.UpdateDiscipline(existingDiscipline.Name, discipline.Name);
 			}
 			catch (Exception ex)
 			{

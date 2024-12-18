@@ -36,9 +36,9 @@ import FilterSection from "@/components/FilterSection";
 import FormDateTime from "@/components/Form/FormDateTime";
 import FormSelectFK from "@/components/Form/FormSelectFK";
 
-let cachedExamDisciplines: {id: string; label: string}[] | null = null;
 
 export default function StatementsPage() {
+	let cachedExamDisciplines: {id: string; label: string}[] | null = null;
 	const [statements, setStatements] = useState<StatementsPromise>();
 	const [examDisciplines, setExamDisciplines] = useState<ExamDisciplinesPromise>();
 	const [isCreatedSuccess, setIsCreatedSuccess] = useState(false);

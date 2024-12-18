@@ -31,7 +31,6 @@ import StudentFilter from "@/types/Student/StudentFilter";
 
 let cachedGroups: string[] | null = null;
 
-//FIXME: Сделать возможность изменения даты рождения студента 
 export default function StudentsPage() {
   const [students, setStudents] = useState<StudentsPromise>();
 	const [page, setPage] = useState(1);

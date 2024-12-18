@@ -59,18 +59,7 @@ namespace backend.Controllers
 
 			try
 			{
-				if (existingGroup.Name != newName && existingGroup.DepartmentName == @group.DepartmentName)
-				{
-					await _context.Database.ExecuteSqlInterpolatedAsync($"Update \"group\" set name = {newName} where name = {id}");
-				}
-				else if (existingGroup.Name == newName && existingGroup.DepartmentName != @group.DepartmentName)
-				{
-					await _context.Database.ExecuteSqlInterpolatedAsync($"Update \"group\" set department_name = {@group.DepartmentName} where name = {id}");
-				}
-				else
-				{
-					await _context.Database.ExecuteSqlInterpolatedAsync($"Update \"group\" set name = {newName}, department_name = {@group.DepartmentName} where name = {id}");
-				}
+				await _context.UpdateGroup(existingGroup.Name, newName, @group.DepartmentName);
 			}
 			catch (Exception ex)
 			{
