@@ -441,12 +441,15 @@ const filteredExams = useMemo(() => {
                 label="Event date and time"
                 required
               />
-              <FormSelect
+              <FormSelectFK
                 label="Lecturer"
                 data={getLecturersData()}
                 name="lecturerId"
                 register={registerCreate}
                 errors={errorsCreate}
+								setValue={(value) => {
+									setValueCreate("lecturerId", value);
+								}}
                 required
               />
               <FormSelect

@@ -363,12 +363,13 @@ export default function StatementsPage() {
               setIsCreatedSuccess={setIsCreatedSuccess}
               isCreatedSuccess={isCreatedSuccess}
             >
-              <FormSelect
+              <FormSelectFK
                 label="Exam Discipline"
                 data={getExamDisciplinesData()}
                 name="examDisciplineId"
                 register={registerCreate}
                 errors={errorsCreate}
+								setValue={(value) => setValueCreate("examDisciplineId", value)}
                 required
               />
               <FormInput
