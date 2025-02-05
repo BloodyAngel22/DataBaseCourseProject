@@ -1,40 +1,33 @@
 {
-  "name": "frontend",
+  "name": "session-test",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
   "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
     "start": "yarn dev",
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@nextui-org/react": "^2.4.8",
-    "@tanstack/react-query": "^5.60.6",
-    "axios": "^1.7.7",
-    "framer-motion": "^11.11.17",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "@internationalized/date": "3.6.0",
+    "@nextui-org/react": "2.6.8",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.12.0",
+    "next": "15.0.3",
+    "next-ui": "^0.9.0",
+    "nextui-cli": "^0.4.0",
+    "react": "19.0.0-rc-66855b96-20241106",
+    "react-dom": "19.0.0-rc-66855b96-20241106",
     "react-hook-form": "^7.53.2",
     "react-icons": "^5.3.0",
-    "react-router-dom": "^6.28.0"
+    "sass": "^1.81.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.13.0",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react-swc": "^3.5.0",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^9.13.0",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.14",
-    "globals": "^15.11.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.15",
-    "typescript": "~5.6.2",
-    "typescript-eslint": "^8.11.0",
-    "vite": "^5.4.10"
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
   }
 }
