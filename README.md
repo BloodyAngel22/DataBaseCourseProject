@@ -1,57 +1,60 @@
 # DataBaseCourseProject
 
-## About the Project
+## О проекте
 
-**DataBaseCourseProject** is a course project that implements a database for organizing the university exam session process. The project uses PostgreSQL for data storage, .NET for the backend, and React (Next.js) for the frontend.
+**DataBaseCourseProject** — это курсовой проект, реализующий базу данных для организации процесса проведения сессии в университете. Проект использует PostgreSQL для хранения данных, .NET для серверной части и React (Next.js) современные технологии для фронтенда.
 
-## Dependencies
+## Зависимости
 
-Before running the project, ensure the following dependencies are installed:
+Перед запуском убедитесь, что у вас установлены следующие зависимости:
 
-- [PostgreSQL](https://www.postgresql.org/download/) — Database
-- [.NET SDK](https://dotnet.microsoft.com/en-us/download) — Backend
-- [Yarn](https://yarnpkg.com/lang/en/) / [npm](https://www.npmjs.com/) — Frontend package manager
+- [PostgreSQL](https://www.postgresql.org/download/) — база данных
+- [.NET SDK](https://dotnet.microsoft.com/en-us/download) — серверная часть
+- [Yarn](https://yarnpkg.com/lang/en/) / [npm](https://www.npmjs.com/) — управление пакетами для фронтенда
 
-## Running the Project
+## Запуск проекта
 
-### 1. Import the Database
+### 1. Импорт базы данных
 
-Before starting the server, the database needs to be imported. This can be done in one of the following ways:
+Перед запуском сервера необходимо импортировать базу данных. Это можно сделать одним из следующих способов:
 
-**Using an SQL Script:**
+**С использованием SQL-скрипта:**
 
 ```sh
 psql -U postgres -d session_test -f backup.sql
 ```
 
-**Using a Dump File:**
+
+**С использованием дампа:**
 
 ```sh
 pg_restore -U postgres -d session_test -v backup.dump
 ```
 
-> ⚠️ **Important!** Make sure the `session_test` database is created in PostgreSQL before importing.
+> ⚠️ **Важно!** Убедитесь, что в PostgreSQL создана база данных session_test перед импортом.
 
-### 2. Start the Server
+### 2. Запуск сервера
 
-Once the database is successfully restored, you can start the server in one of the following ways:
+После успешного восстановления базы данных запустите сервер одним из следующих способов:
 
-**Via Script:**
+**Через скрипт:**
 
 ```sh
 ./projectStart.sh
 ```
 
-**Or Manually via .NET:**
+
+**Или вручную через .NET:**
 
 ```sh
 dotnet run --project Host/Host.csproj
 ```
 
-## Project Structure
 
-- `Host/` — Entry point for the application, managing the startup of both the backend (API) and frontend (React/Next.js) using .NET Aspire.
-- `ServiceDefaults/` — General settings and configurations for services (.NET Aspire).
-- `backend/` — Backend of the application, implementing the API (Web API using .NET).
-- `frontend/` — Frontend of the application, built with React (Next.js).
-- `projectStart.sh` — Script for starting the entire application.
+## Структура проекта
+
+- `Host/` — точка входа для приложения, управляющая запуском как серверной (API), так и клиентской части (React/Next.js) с использованием .NET Aspire
+- `ServiceDefaults/` — общие настройки и конфигурации для сервисов (.NET Aspire)
+- `backend/` — серверная часть приложения, реализующая API (Web API на .NET)
+- `frontend/` — клиентская часть приложения, построенная на React (Next.js)
+- `projectStart.sh` — скрипт для запуска всего приложения
